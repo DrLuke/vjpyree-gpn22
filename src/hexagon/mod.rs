@@ -20,11 +20,11 @@ fn spawn_hexagons(
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<ColorMaterial>>,
 ) {
-    commands.spawn(Camera2dBundle{
+    commands.spawn(Camera2dBundle {
         projection: OrthographicProjection {
             far: 1000.,
             near: -1000.,
-            scaling_mode: ScalingMode::Fixed{width: 1920., height: 1080.},
+            scaling_mode: ScalingMode::Fixed { width: 1920., height: 1080. },
             ..Default::default()
         },
         ..Camera2dBundle::default()
@@ -40,7 +40,7 @@ fn spawn_hexagons(
         HexagonDefinition::B3,
     ];
 
-    for hexagon in hexagons.map {
+    for hexagon in hexagons {
         let mesh = Mesh2dHandle(meshes.add(
             RegularPolygon::new(HexagonDefinition::size(&hexagon).x / 2., 6)
         ));
