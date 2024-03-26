@@ -34,8 +34,8 @@ impl HexagonDefinition {
 pub trait HexagonComponent {
     fn hexagon_definition(&self) -> HexagonDefinition;
 
-    fn center(&self) -> Vec2 { HexagonDefinition::center(&self.hexagon_definition(self)) }
-    fn size(&self) -> Vec2 { HexagonDefinition::size(&self.hexagon_definition(self)) }
+    fn center(&self) -> Vec2 { HexagonDefinition::center(&self.hexagon_definition()) }
+    fn size(&self) -> Vec2 { HexagonDefinition::size(&self.hexagon_definition()) }
 }
 
 pub struct HexagonMain;
