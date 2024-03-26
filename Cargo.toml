@@ -8,3 +8,4 @@ edition = "2021"
 [dependencies]
 bevy = "0.13.1"
 bevy_rapier3d = "*"
+bevy-inspector-egui = "*"
