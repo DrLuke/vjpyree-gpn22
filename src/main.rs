@@ -11,6 +11,10 @@ fn main() {
     App::new()
         .add_plugins(DefaultPlugins)
         .add_plugins(WorldInspectorPlugin::new())
+        .insert_resource(RapierConfiguration{
+            gravity: Vect::Z * -9.81 * 100.,
+            ..default()
+        })
         .add_plugins(RapierPhysicsPlugin::<NoUserData>::default())
         .add_plugins(RapierDebugRenderPlugin::default())
         //.add_plugins(HexagonPlugin)
