@@ -1,5 +1,6 @@
 use bevy::prelude::Vec2;
 
+#[derive(Copy, Clone)]
 pub enum HexagonDefinition {
     Main,
     A1,
