@@ -11,7 +11,7 @@ fn main() {
     App::new()
         .add_plugins(DefaultPlugins)
         .add_plugins(WorldInspectorPlugin::new())
-        .insert_resource(RapierConfiguration{
+        .insert_resource(RapierConfiguration {
             gravity: Vect::Z * -9.81 * 100.,
             ..default()
         })
@@ -19,5 +19,12 @@ fn main() {
         .add_plugins(RapierDebugRenderPlugin::default())
         //.add_plugins(HexagonPlugin)
         .add_plugins(EyesPlugin)
+        .add_systems(Startup, startup)
         .run();
+}
+
+fn startup(
+    mut ambient_light: ResMut<AmbientLight>
+) {
+    ambient_light.brightness = 0.0;
 }
