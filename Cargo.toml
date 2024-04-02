@@ -9,3 +9,6 @@ edition = "2021"
 bevy = { version = "0.13.1", features = ["jpeg"] }
 bevy_rapier3d = "*"
 bevy-inspector-egui = "*"
+
+[profile.dev.package."*"]
+opt-level = 3
