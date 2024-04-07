@@ -1,11 +1,11 @@
 mod hexagon;
-mod eyes;
+mod physics_hexagon;
 
 use bevy::prelude::*;
 use bevy_inspector_egui::quick::WorldInspectorPlugin;
 use bevy_rapier3d::prelude::*;
-use crate::eyes::EyesPlugin;
 use crate::hexagon::HexagonPlugin;
+use crate::physics_hexagon::PhysicsHexagonPlugin;
 
 fn main() {
     App::new()
@@ -18,7 +18,7 @@ fn main() {
         .add_plugins(RapierPhysicsPlugin::<NoUserData>::default())
         .add_plugins(RapierDebugRenderPlugin::default())
         //.add_plugins(HexagonPlugin)
-        .add_plugins(EyesPlugin)
+        .add_plugins(PhysicsHexagonPlugin)
         .add_systems(Startup, startup)
         .run();
 }

@@ -1,12 +1,16 @@
+mod hexagon_colliders;
+
 use std::f32::consts::PI;
 use bevy::prelude::*;
 use bevy::render::camera::ScalingMode;
 use bevy::sprite::{MaterialMesh2dBundle, Mesh2dHandle};
 use bevy_rapier3d::prelude::{Ccd, Collider, RigidBody};
+use crate::hexagon::HexagonDefinition;
+use crate::physics_hexagon::hexagon_colliders::spawn_hexagon_collier;
 
-pub struct EyesPlugin;
+pub struct PhysicsHexagonPlugin;
 
-impl Plugin for EyesPlugin {
+impl Plugin for PhysicsHexagonPlugin {
     fn build(&self, app: &mut App) {
         app.add_systems(Startup, (eyes_init));
     }
@@ -19,55 +23,60 @@ fn eyes_init(
     asset_server: Res<AssetServer>,
 ) {
     commands.spawn(Camera3dBundle {
-        /*projection: Projection::Orthographic(OrthographicProjection {
-            scaling_mode: ScalingMode::WindowSize(1.),
-            near: 2000.,
-            far: -2000.,
-            ..default()
-        }),*/
         projection: Projection::Perspective(PerspectiveProjection {
-            fov: 30_f32.to_radians(),
+            fov: 10_f32.to_radians(),
             ..default()
         }),
-        transform: Transform::from_xyz(0., 0., 2000.).looking_at(Vec3::new(0., 0., 0.), Vec3::Y),
+        transform: Transform::from_xyz(0., 0., 10000.).looking_at(Vec3::new(0., 0., 0.), Vec3::Y),
         ..Camera3dBundle::default()
     });
 
 
-    spawn_eyes(&mut commands, &mut meshes, &mut materials, 300., &asset_server);
+    spawn_eyes(&mut commands, &mut meshes, &mut materials, &asset_server, HexagonDefinition::Main);
+    spawn_eyes(&mut commands, &mut meshes, &mut materials, &asset_server, HexagonDefinition::A1);
+    spawn_eyes(&mut commands, &mut meshes, &mut materials, &asset_server, HexagonDefinition::B1);
+    spawn_eyes(&mut commands, &mut meshes, &mut materials, &asset_server, HexagonDefinition::A2);
+    spawn_eyes(&mut commands, &mut meshes, &mut materials, &asset_server, HexagonDefinition::B2);
+    spawn_eyes(&mut commands, &mut meshes, &mut materials, &asset_server, HexagonDefinition::A3);
+    spawn_eyes(&mut commands, &mut meshes, &mut materials, &asset_server, HexagonDefinition::B3);
 }
 
 
 #[derive(Component)]
-pub struct EyesHexagon;
+pub struct PhysicsHexagon;
 
 fn spawn_eyes(
     commands: &mut Commands,
     meshes: &mut ResMut<Assets<Mesh>>,
     materials: &mut ResMut<Assets<StandardMaterial>>,
-    // Outer radius of hexagon
-    radius: f32,
     asset_server: &Res<AssetServer>,
+    hexagon_definition: HexagonDefinition
 ) -> Entity {
     let material = materials.add(StandardMaterial {
         base_color: Color::rgba(0.8, 0.8, 0.8, 1.),
         ..default()
     });
 
-    let wall_width = 50.;
+    let radius = hexagon_definition.size().x/2.;
+    let wall_width = 10.;
     let inner_radius = 3_f32.sqrt() / 2. * radius;
     let floor_thickness = 10.;
 
-    let wall = meshes.add(Cuboid::new(radius.clone(), wall_width.clone(), 1000.));
+    let wall = meshes.add(Cuboid::new(radius.clone(), wall_width.clone(), 800.));
     let floor = meshes.add(Cuboid::new(radius.clone(), inner_radius.clone() * 2., floor_thickness.clone()));
 
     let hexagon_entity = commands.spawn((
-        SpatialBundle::default(),
-        EyesHexagon {},
+        SpatialBundle::from_transform(Transform::from_xyz(
+            hexagon_definition.center().x - 1920./2.,
+            hexagon_definition.center().y - 1080./2.,
+            0.0
+        )),
+        PhysicsHexagon {},
     )
     ).id();
 
     let hexagon_elements = [
+        spawn_hexagon_collier(commands, hexagon_definition, 100., wall_width, floor_thickness),
         spawn_wall(commands, &wall, &material, &radius, &wall_width, 0),
         spawn_wall(commands, &wall, &material, &radius, &wall_width, 1),
         spawn_wall(commands, &wall, &material, &radius, &wall_width, 2),
@@ -87,7 +96,10 @@ fn spawn_eyes(
     for n in 1..10 {
         let entity = commands.spawn((
             SpatialBundle {
-                transform: Transform::from_xyz(0., n.clone() as f32, 100. + n as f32 * 100.),
+                transform: Transform::from_xyz(
+                    hexagon_definition.center().x - 1920./2.,
+                    hexagon_definition.center().y - 1080./2. + n.clone() as f32,
+                    100. + n as f32 * 100.),
                 ..default()
             },
             RigidBody::Dynamic,
@@ -110,10 +122,10 @@ fn spawn_eyes(
 
     commands
         .spawn(PointLightBundle {
-            transform: Transform::from_xyz(0.0, 0.0, 100.0),
+            transform: Transform::from_xyz(hexagon_definition.center().x - 1920./2., hexagon_definition.center().y - 1080./2., 100.0),
             point_light: PointLight {
                 intensity: 100_000_000.0,
-                range: 10_000.0,
+                range: 40_000.0,
                 color: Color::WHITE,
                 shadows_enabled: true,
                 ..default()
@@ -123,10 +135,10 @@ fn spawn_eyes(
 
     commands
         .spawn(PointLightBundle {
-            transform: Transform::from_xyz(100.0, 0.0, 150.0),
+            transform: Transform::from_xyz(hexagon_definition.center().x - 1920./2. + 100., hexagon_definition.center().y - 1080./2., 150.0),
             point_light: PointLight {
                 intensity: 300_000_000.0,
-                range: 10_000.0,
+                range: 40_000.0,
                 color: Color::RED,
                 shadows_enabled: true,
                 ..default()
@@ -135,10 +147,10 @@ fn spawn_eyes(
         });
     commands
         .spawn(PointLightBundle {
-            transform: Transform::from_xyz(-100.0, 0.0, 150.0),
+            transform: Transform::from_xyz(hexagon_definition.center().x - 1920./2. - 100., hexagon_definition.center().y - 1080./2., 150.0),
             point_light: PointLight {
                 intensity: 300_000_000.0,
-                range: 10_000.0,
+                range: 40_0000.0,
                 color: Color::BLUE,
                 shadows_enabled: true,
                 ..default()
@@ -176,9 +188,6 @@ fn spawn_wall(
             ).with_rotation(Quat::from_rotation_z(angle)),
             ..default()
         },
-        RigidBody::Fixed,
-        Ccd::enabled(),
-        Collider::cuboid(size.clone() / 2., wall_width.clone() / 2., 1000. / 2.),
     )).id()
 }
 
@@ -203,8 +212,5 @@ fn spawn_floor(
             ).with_rotation(Quat::from_rotation_z(angle)),
             ..default()
         },
-        RigidBody::Fixed,
-        Ccd::enabled(),
-        Collider::cuboid(size.clone() / 3_f32.sqrt(), size.clone(), floor_thickness.clone() / 2.),
     )).id()
 }
