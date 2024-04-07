@@ -70,7 +70,7 @@ fn spawn_wall(
         ),
         RigidBody::Fixed,
         Ccd::enabled(),
-        Collider::cuboid(size.clone() / 2., wall_width.clone() / 2., height),
+        Collider::cuboid(size.clone() / 2., wall_width.clone() / 2., height / 2.),
     )).id()
 }
 

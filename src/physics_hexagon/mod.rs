@@ -68,10 +68,11 @@ fn spawn_eyes(
 
     let radius = hexagon_definition.size().x / 2.;
     let wall_width = 10.;
+    let wall_height = 1000.;
     let inner_radius = 3_f32.sqrt() / 2. * radius;
     let floor_thickness = 10.;
 
-    let wall = meshes.add(Cuboid::new(radius.clone(), wall_width.clone(), 800.));
+    let wall = meshes.add(Cuboid::new(radius.clone(), wall_width.clone(), wall_height));
     let floor = meshes.add(Cuboid::new(radius.clone(), inner_radius.clone() * 2., floor_thickness.clone()));
 
     let hexagon_entity = commands.spawn((
@@ -97,7 +98,7 @@ fn spawn_eyes(
     )).id();
 
     let hexagon_elements = [
-        spawn_hexagon_collier(commands, hexagon_definition, 500., wall_width, floor_thickness),
+        spawn_hexagon_collier(commands, hexagon_definition, wall_height, wall_width, floor_thickness),
         spawn_wall(commands, &wall, &material, &radius, &wall_width, 0),
         spawn_wall(commands, &wall, &material, &radius, &wall_width, 1),
         spawn_wall(commands, &wall, &material, &radius, &wall_width, 2),
