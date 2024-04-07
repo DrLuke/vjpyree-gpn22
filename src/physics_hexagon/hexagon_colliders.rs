@@ -29,12 +29,12 @@ pub fn spawn_hexagon_collier(
     )).id();
 
     let hexagon_elements = [
-        spawn_wall(commands, &radius, &wall_width, 0),
-        spawn_wall(commands, &radius, &wall_width, 1),
-        spawn_wall(commands, &radius, &wall_width, 2),
-        spawn_wall(commands, &radius, &wall_width, 3),
-        spawn_wall(commands, &radius, &wall_width, 4),
-        spawn_wall(commands, &radius, &wall_width, 5),
+        spawn_wall(commands, &radius, height, &wall_width, 0),
+        spawn_wall(commands, &radius, height, &wall_width, 1),
+        spawn_wall(commands, &radius, height, &wall_width, 2),
+        spawn_wall(commands, &radius, height, &wall_width, 3),
+        spawn_wall(commands, &radius, height, &wall_width, 4),
+        spawn_wall(commands, &radius, height, &wall_width, 5),
         spawn_floor(commands, &inner_radius, &floor_thickness, 0),
         spawn_floor(commands, &inner_radius, &floor_thickness, 1),
         spawn_floor(commands, &inner_radius, &floor_thickness, 2),
@@ -49,6 +49,7 @@ pub fn spawn_hexagon_collier(
 fn spawn_wall(
     commands: &mut Commands,
     size: &f32,
+    height: f32,
     wall_width: &f32,
     index: isize,
 ) -> Entity {
@@ -69,7 +70,7 @@ fn spawn_wall(
         ),
         RigidBody::Fixed,
         Ccd::enabled(),
-        Collider::cuboid(size.clone() / 2., wall_width.clone() / 2., 1000. / 2.),
+        Collider::cuboid(size.clone() / 2., wall_width.clone() / 2., height),
     )).id()
 }
 
