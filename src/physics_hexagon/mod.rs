@@ -105,9 +105,9 @@ fn spawn_eyes(
         spawn_wall(commands, &wall, &material, &radius, &wall_width, 3),
         spawn_wall(commands, &wall, &material, &radius, &wall_width, 4),
         spawn_wall(commands, &wall, &material, &radius, &wall_width, 5),
-        spawn_floor(commands, &floor, &material, &inner_radius, &floor_thickness, 0),
-        spawn_floor(commands, &floor, &material, &inner_radius, &floor_thickness, 1),
-        spawn_floor(commands, &floor, &material, &inner_radius, &floor_thickness, 2),
+        spawn_floor(commands, &floor, &material, &floor_thickness, 0),
+        spawn_floor(commands, &floor, &material, &floor_thickness, 1),
+        spawn_floor(commands, &floor, &material, &floor_thickness, 2),
     ];
 
     commands.entity(hexagon_geometry).push_children(&hexagon_elements);
@@ -218,7 +218,6 @@ fn spawn_floor(
     commands: &mut Commands,
     mesh: &Handle<Mesh>,
     material: &Handle<StandardMaterial>,
-    size: &f32,
     floor_thickness: &f32,
     index: isize,
 ) -> Entity {
