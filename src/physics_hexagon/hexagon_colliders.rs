@@ -53,8 +53,8 @@ fn spawn_wall(
     wall_width: &f32,
     index: isize,
 ) -> Entity {
-    let mut x = 0.;
-    let mut y = 3_f32.sqrt() / 2. * size.clone() + wall_width / 2.;
+    let x = 0.;
+    let y = 3_f32.sqrt() / 2. * size.clone() + wall_width / 2.;
 
     let angle = (index as f32) * PI / 3.;
 

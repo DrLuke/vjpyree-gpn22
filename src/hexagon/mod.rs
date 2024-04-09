@@ -5,13 +5,12 @@ use bevy::prelude::*;
 use bevy::render::camera::ScalingMode;
 use bevy::sprite::{MaterialMesh2dBundle, Mesh2dHandle};
 pub use hexagon_definition::HexagonDefinition;
-use crate::Keyframes::Rotation;
 
 pub struct HexagonPlugin;
 
 impl Plugin for HexagonPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(Startup, (spawn_hexagons));
+        app.add_systems(Startup, spawn_hexagons);
     }
 }
 

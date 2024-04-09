@@ -4,8 +4,7 @@ mod render;
 
 use std::f32::consts::PI;
 use bevy::prelude::*;
-use bevy::render::camera::{RenderTarget, ScalingMode};
-use bevy::sprite::{MaterialMesh2dBundle, Mesh2dHandle};
+use bevy::render::camera::{RenderTarget};
 use bevy_rapier3d::prelude::{Ccd, Collider, RigidBody};
 use crate::hexagon::HexagonDefinition;
 use crate::physics_hexagon::fix_perspective::{fix_perspective_system, FixPerspectiveSubject, FixPerspectiveTarget};
@@ -17,8 +16,8 @@ pub struct PhysicsHexagonPlugin;
 impl Plugin for PhysicsHexagonPlugin {
     fn build(&self, app: &mut App) {
         app.init_resource::<PhysicsHexagonRenderTarget>();
-        app.add_systems(Startup, (eyes_init));
-        app.add_systems(Update, (fix_perspective_system));
+        app.add_systems(Startup, eyes_init);
+        app.add_systems(Update, fix_perspective_system);
     }
 }
 
@@ -203,8 +202,8 @@ fn spawn_wall(
     wall_width: &f32,
     index: isize,
 ) -> Entity {
-    let mut x = 0.;
-    let mut y = 3_f32.sqrt() / 2. * size.clone() + wall_width / 2.;
+    let x = 0.;
+    let y = 3_f32.sqrt() / 2. * size.clone() + wall_width / 2.;
 
     let angle = (index as f32) * PI / 3.;
 

@@ -1,5 +1,5 @@
 use bevy::prelude::*;
-use bevy::render::render_resource::{AddressMode, Extent3d, SamplerDescriptor, TextureDescriptor, TextureDimension, TextureFormat, TextureUsages};
+use bevy::render::render_resource::{Extent3d, TextureDescriptor, TextureDimension, TextureFormat, TextureUsages};
 use bevy::render::texture::{ImageAddressMode, ImageSampler, ImageSamplerDescriptor};
 
 
