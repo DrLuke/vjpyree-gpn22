@@ -5,6 +5,7 @@ mod render;
 use std::f32::consts::PI;
 use bevy::prelude::*;
 use bevy::render::camera::{RenderTarget};
+use bevy::render::view::RenderLayers;
 use bevy_rapier3d::prelude::{Ccd, Collider, RigidBody};
 use crate::hexagon::HexagonDefinition;
 use crate::physics_hexagon::fix_perspective::{fix_perspective_system, FixPerspectiveSubject, FixPerspectiveTarget};
@@ -44,6 +45,7 @@ fn eyes_init(
             ..Camera3dBundle::default()
         },
         FixPerspectiveTarget {},
+        RenderLayers::layer(1),
     ));
 
 
@@ -98,7 +100,8 @@ fn spawn_eyes(
                 hexagon_definition.center().y - 1080. / 2.,
                 0.0,
             )
-        }
+        },
+        RenderLayers::layer(1),
     )
     ).id();
 
