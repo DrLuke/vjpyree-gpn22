@@ -1,6 +1,6 @@
 mod hexagon_colliders;
 mod fix_perspective;
-mod render;
+pub mod render;
 
 use std::f32::consts::PI;
 use bevy::prelude::*;
@@ -11,6 +11,7 @@ use crate::hexagon::HexagonDefinition;
 use crate::physics_hexagon::fix_perspective::{fix_perspective_system, FixPerspectiveSubject, FixPerspectiveTarget};
 use crate::physics_hexagon::hexagon_colliders::spawn_hexagon_collier;
 use crate::physics_hexagon::render::PhysicsHexagonRenderTarget;
+use crate::propagating_render_layers::PropagatingRenderLayers;
 
 pub struct PhysicsHexagonPlugin;
 
@@ -45,7 +46,7 @@ fn eyes_init(
             ..Camera3dBundle::default()
         },
         FixPerspectiveTarget {},
-        RenderLayers::layer(1),
+        PropagatingRenderLayers{render_layers: RenderLayers::layer(1)},
     ));
 
 
@@ -101,7 +102,7 @@ fn spawn_eyes(
                 0.0,
             )
         },
-        RenderLayers::layer(1),
+        PropagatingRenderLayers{render_layers: RenderLayers::layer(1)},
     )
     ).id();
 
@@ -141,6 +142,7 @@ fn spawn_eyes(
             RigidBody::Dynamic,
             Ccd::enabled(),
             Collider::ball(50.),
+            PropagatingRenderLayers{render_layers: RenderLayers::layer(1)},
         )).id();
 
         let eye_mesh = commands.spawn((
@@ -157,7 +159,7 @@ fn spawn_eyes(
     }
 
     commands
-        .spawn(PointLightBundle {
+        .spawn((PointLightBundle {
             transform: Transform::from_xyz(hexagon_definition.center().x - 1920. / 2., hexagon_definition.center().y - 1080. / 2., 100.0),
             point_light: PointLight {
                 intensity: 100_000_000.0,
@@ -167,10 +169,10 @@ fn spawn_eyes(
                 ..default()
             },
             ..default()
-        });
+        },PropagatingRenderLayers{render_layers: RenderLayers::layer(1)}));
 
     commands
-        .spawn(PointLightBundle {
+        .spawn((PointLightBundle {
             transform: Transform::from_xyz(hexagon_definition.center().x - 1920. / 2. + 100., hexagon_definition.center().y - 1080. / 2., 150.0),
             point_light: PointLight {
                 intensity: 300_000_000.0,
@@ -180,9 +182,9 @@ fn spawn_eyes(
                 ..default()
             },
             ..default()
-        });
+        },PropagatingRenderLayers{render_layers: RenderLayers::layer(1)}));
     commands
-        .spawn(PointLightBundle {
+        .spawn((PointLightBundle {
             transform: Transform::from_xyz(hexagon_definition.center().x - 1920. / 2. - 100., hexagon_definition.center().y - 1080. / 2., 150.0),
             point_light: PointLight {
                 intensity: 300_000_000.0,
@@ -192,7 +194,7 @@ fn spawn_eyes(
                 ..default()
             },
             ..default()
-        });
+        },PropagatingRenderLayers{render_layers: RenderLayers::layer(1)}));
 
     return hexagon_entity;
 }

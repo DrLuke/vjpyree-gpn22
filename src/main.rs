@@ -1,11 +1,15 @@
 mod hexagon;
 mod physics_hexagon;
+mod render_out;
+mod propagating_render_layers;
 
 use bevy::prelude::*;
 use bevy_inspector_egui::quick::WorldInspectorPlugin;
 use bevy_rapier3d::prelude::*;
 use crate::hexagon::HexagonPlugin;
 use crate::physics_hexagon::PhysicsHexagonPlugin;
+use crate::propagating_render_layers::{PropagatingRenderLayersPlugin};
+use crate::render_out::RenderOutPlugin;
 
 fn main() {
     App::new()
@@ -17,7 +21,9 @@ fn main() {
         })
         .add_plugins(RapierPhysicsPlugin::<NoUserData>::default())
         .add_plugins(RapierDebugRenderPlugin::default())
+        .add_plugins(PropagatingRenderLayersPlugin)
         //.add_plugins(HexagonPlugin)
+        .add_plugins(RenderOutPlugin)
         .add_plugins(PhysicsHexagonPlugin)
         .add_systems(Startup, startup)
         .run();
