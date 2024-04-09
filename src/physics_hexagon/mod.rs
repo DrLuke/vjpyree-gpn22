@@ -1,19 +1,22 @@
 mod hexagon_colliders;
 mod fix_perspective;
+mod render;
 
 use std::f32::consts::PI;
 use bevy::prelude::*;
-use bevy::render::camera::ScalingMode;
+use bevy::render::camera::{RenderTarget, ScalingMode};
 use bevy::sprite::{MaterialMesh2dBundle, Mesh2dHandle};
 use bevy_rapier3d::prelude::{Ccd, Collider, RigidBody};
 use crate::hexagon::HexagonDefinition;
 use crate::physics_hexagon::fix_perspective::{fix_perspective_system, FixPerspectiveSubject, FixPerspectiveTarget};
 use crate::physics_hexagon::hexagon_colliders::spawn_hexagon_collier;
+use crate::physics_hexagon::render::PhysicsHexagonRenderTarget;
 
 pub struct PhysicsHexagonPlugin;
 
 impl Plugin for PhysicsHexagonPlugin {
     fn build(&self, app: &mut App) {
+        app.init_resource::<PhysicsHexagonRenderTarget>();
         app.add_systems(Startup, (eyes_init));
         app.add_systems(Update, (fix_perspective_system));
     }
@@ -23,17 +26,25 @@ fn eyes_init(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
+    rt: Res<PhysicsHexagonRenderTarget>,
     asset_server: Res<AssetServer>,
 ) {
-    commands.spawn((Camera3dBundle {
-        projection: Projection::Perspective(PerspectiveProjection {
-            fov: 30_f32.to_radians(),
-            ..default()
-        }),
-        transform: Transform::from_xyz(0., 0., 2000.).looking_at(Vec3::new(0., 0., 0.), Vec3::Y),
-        ..Camera3dBundle::default()
-    },
-    FixPerspectiveTarget {},
+    commands.spawn((
+        Camera3dBundle {
+            projection: Projection::Perspective(PerspectiveProjection {
+                fov: 30_f32.to_radians(),
+                ..default()
+            }),
+            transform: Transform::from_xyz(0., 0., 2000.).looking_at(Vec3::new(0., 0., 0.), Vec3::Y),
+            camera: Camera {
+                order: -100,
+                target: RenderTarget::Image(rt.render_target.clone()),
+                clear_color: Color::BLACK.into(),
+                ..default()
+            },
+            ..Camera3dBundle::default()
+        },
+        FixPerspectiveTarget {},
     ));
 
 
