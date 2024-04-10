@@ -46,17 +46,17 @@ fn eyes_init(
             ..Camera3dBundle::default()
         },
         FixPerspectiveTarget {},
-        PropagatingRenderLayers{render_layers: RenderLayers::layer(1)},
+        PropagatingRenderLayers{render_layers: RenderLayers::all()},
     ));
 
 
-    spawn_eyes(&mut commands, &mut meshes, &mut materials, &asset_server, HexagonDefinition::Main);
-    spawn_eyes(&mut commands, &mut meshes, &mut materials, &asset_server, HexagonDefinition::A1);
-    spawn_eyes(&mut commands, &mut meshes, &mut materials, &asset_server, HexagonDefinition::B1);
-    spawn_eyes(&mut commands, &mut meshes, &mut materials, &asset_server, HexagonDefinition::A2);
-    spawn_eyes(&mut commands, &mut meshes, &mut materials, &asset_server, HexagonDefinition::B2);
-    spawn_eyes(&mut commands, &mut meshes, &mut materials, &asset_server, HexagonDefinition::A3);
-    spawn_eyes(&mut commands, &mut meshes, &mut materials, &asset_server, HexagonDefinition::B3);
+    spawn_physics_hexagon(&mut commands, &mut meshes, &mut materials, &asset_server, HexagonDefinition::Main);
+    spawn_physics_hexagon(&mut commands, &mut meshes, &mut materials, &asset_server, HexagonDefinition::A1);
+    spawn_physics_hexagon(&mut commands, &mut meshes, &mut materials, &asset_server, HexagonDefinition::B1);
+    spawn_physics_hexagon(&mut commands, &mut meshes, &mut materials, &asset_server, HexagonDefinition::A2);
+    spawn_physics_hexagon(&mut commands, &mut meshes, &mut materials, &asset_server, HexagonDefinition::B2);
+    spawn_physics_hexagon(&mut commands, &mut meshes, &mut materials, &asset_server, HexagonDefinition::A3);
+    spawn_physics_hexagon(&mut commands, &mut meshes, &mut materials, &asset_server, HexagonDefinition::B3);
 }
 
 
@@ -67,7 +67,7 @@ pub struct PhysicsHexagon;
 #[derive(Component)]
 pub struct HexagonGeometry;
 
-fn spawn_eyes(
+fn spawn_physics_hexagon(
     commands: &mut Commands,
     meshes: &mut ResMut<Assets<Mesh>>,
     materials: &mut ResMut<Assets<StandardMaterial>>,
