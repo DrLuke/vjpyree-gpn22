@@ -1,6 +1,6 @@
-use bevy::prelude::Vec2;
+use bevy::prelude::{Component, Vec2};
 
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Eq, PartialEq)]
 pub enum HexagonDefinition {
     Main,
     A1,
@@ -32,51 +32,23 @@ impl HexagonDefinition {
     }
 }
 
-pub trait HexagonComponent {
-    fn hexagon_definition(&self) -> HexagonDefinition;
-
-    fn center(&self) -> Vec2 { HexagonDefinition::center(&self.hexagon_definition()) }
-    fn size(&self) -> Vec2 { HexagonDefinition::size(&self.hexagon_definition()) }
+#[derive(Copy, Clone, Eq, PartialEq, Component)]
+pub struct HexagonComponent {
+    hexagon_definition: HexagonDefinition,
 }
 
-pub struct HexagonMain;
-
-impl HexagonComponent for HexagonMain {
-    fn hexagon_definition(&self) -> HexagonDefinition { HexagonDefinition::Main}
+impl HexagonComponent {
+    pub fn get_hexagon_definition(&self) -> HexagonDefinition { self.hexagon_definition }
 }
 
-pub struct HexagonA1;
-
-impl HexagonComponent for HexagonA1 {
-    fn hexagon_definition(&self) -> HexagonDefinition { HexagonDefinition::A1}
+impl From<HexagonDefinition> for HexagonComponent {
+    fn from(value: HexagonDefinition) -> Self {
+        Self { hexagon_definition: value }
+    }
 }
 
-pub struct HexagonA2;
-
-impl HexagonComponent for HexagonA2 {
-    fn hexagon_definition(&self) -> HexagonDefinition { HexagonDefinition::A2}
-}
-
-pub struct HexagonA3;
-
-impl HexagonComponent for HexagonA3 {
-    fn hexagon_definition(&self) -> HexagonDefinition { HexagonDefinition::A3}
-}
-
-pub struct HexagonB1;
-
-impl HexagonComponent for HexagonB1 {
-    fn hexagon_definition(&self) -> HexagonDefinition { HexagonDefinition::B1}
-}
-
-pub struct HexagonB2;
-
-impl HexagonComponent for HexagonB2 {
-    fn hexagon_definition(&self) -> HexagonDefinition { HexagonDefinition::B2}
-}
-
-pub struct HexagonB3;
-
-impl HexagonComponent for HexagonB3 {
-    fn hexagon_definition(&self) -> HexagonDefinition { HexagonDefinition::B3}
+impl PartialEq<HexagonDefinition> for HexagonComponent {
+    fn eq(&self, other: &HexagonDefinition) -> bool {
+        self.hexagon_definition == *other
+    }
 }
