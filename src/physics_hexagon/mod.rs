@@ -1,6 +1,7 @@
 mod hexagon_colliders;
 mod fix_perspective;
 pub mod render;
+mod effectors;
 
 use std::f32::consts::PI;
 use bevy::prelude::*;
@@ -139,6 +140,7 @@ fn spawn_physics_hexagon(
                     100. + n as f32 * 100.),
                 ..default()
             },
+            HexagonPhysicsElement,
             RigidBody::Dynamic,
             Ccd::enabled(),
             Collider::ball(50.),
@@ -251,3 +253,7 @@ fn spawn_floor(
         },
     )).id()
 }
+
+// Tag component for physics objects that are spawned into hexagons that shall be manipulated by effectors
+#[derive(Component, Default, Copy, Clone)]
+pub struct HexagonPhysicsElement;
