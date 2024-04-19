@@ -2,6 +2,7 @@ mod hexagon_colliders;
 mod fix_perspective;
 pub mod render;
 pub mod effectors;
+mod local_gravity;
 
 use std::f32::consts::PI;
 use bevy::prelude::*;
@@ -14,6 +15,7 @@ use crate::hexagon::HexagonDefinition;
 use crate::physics_hexagon::effectors::EffectorsPlugin;
 use crate::physics_hexagon::fix_perspective::{fix_perspective_system, FixPerspectiveSubject, FixPerspectiveTarget};
 use crate::physics_hexagon::hexagon_colliders::spawn_hexagon_collier;
+use crate::physics_hexagon::local_gravity::{local_gravity_system, LocalGravity};
 use crate::physics_hexagon::render::PhysicsHexagonRenderTarget;
 use crate::propagating_render_layers::PropagatingRenderLayers;
 
@@ -24,7 +26,7 @@ impl Plugin for PhysicsHexagonPlugin {
         app.add_plugins(EffectorsPlugin);
         app.init_resource::<PhysicsHexagonRenderTarget>();
         app.add_systems(Startup, eyes_init);
-        app.add_systems(Update, fix_perspective_system);
+        app.add_systems(Update, (fix_perspective_system, local_gravity_system));
     }
 }
 
@@ -41,7 +43,7 @@ fn eyes_init(
                 fov: 20_f32.to_radians(),
                 ..default()
             }),
-            transform: Transform::from_xyz(0., 0., 6000.).looking_at(Vec3::new(0., 0., 0.), Vec3::Y),
+            transform: Transform::from_xyz(0., 0., 4000.).looking_at(Vec3::new(0., 0., 0.), Vec3::Y),
             camera: Camera {
                 order: -100,
                 target: RenderTarget::Image(rt.render_target.clone()),
@@ -88,7 +90,7 @@ fn spawn_physics_hexagon(
 
     let radius = hexagon_definition.size().x / 2.;
     let wall_width = 10.;
-    let wall_height = 1000.;
+    let wall_height = 500.;
     let inner_radius = 3_f32.sqrt() / 2. * radius;
     let floor_thickness = 10.;
 
@@ -108,6 +110,9 @@ fn spawn_physics_hexagon(
                 hexagon_definition.center().y - 1080. / 2.,
                 0.0,
             )
+        },
+        LocalGravity {
+            gravity: Vec3::Z * -9.81 * 100000.
         },
         PropagatingRenderLayers{render_layers: RenderLayers::layer(1)},
     )
@@ -151,10 +156,6 @@ fn spawn_physics_hexagon(
             Ccd::enabled(),
             Collider::ball(50.),
             PropagatingRenderLayers{render_layers: RenderLayers::layer(1)},
-            ExternalForce {
-                force: Vec3::Z * -9.81 * 100000.,
-                ..default()
-            }
         )).id();
 
         let eye_mesh = commands.spawn((
