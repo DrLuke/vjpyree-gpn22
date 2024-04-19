@@ -1,14 +1,17 @@
 mod hexagon_colliders;
 mod fix_perspective;
 pub mod render;
-mod effectors;
+pub mod effectors;
 
 use std::f32::consts::PI;
 use bevy::prelude::*;
 use bevy::render::camera::{RenderTarget};
 use bevy::render::view::RenderLayers;
+use bevy_rapier3d::dynamics::ExternalForce;
+use bevy_rapier3d::math::Vect;
 use bevy_rapier3d::prelude::{Ccd, Collider, RigidBody};
 use crate::hexagon::HexagonDefinition;
+use crate::physics_hexagon::effectors::EffectorsPlugin;
 use crate::physics_hexagon::fix_perspective::{fix_perspective_system, FixPerspectiveSubject, FixPerspectiveTarget};
 use crate::physics_hexagon::hexagon_colliders::spawn_hexagon_collier;
 use crate::physics_hexagon::render::PhysicsHexagonRenderTarget;
@@ -18,6 +21,7 @@ pub struct PhysicsHexagonPlugin;
 
 impl Plugin for PhysicsHexagonPlugin {
     fn build(&self, app: &mut App) {
+        app.add_plugins(EffectorsPlugin);
         app.init_resource::<PhysicsHexagonRenderTarget>();
         app.add_systems(Startup, eyes_init);
         app.add_systems(Update, fix_perspective_system);
@@ -34,10 +38,10 @@ fn eyes_init(
     commands.spawn((
         Camera3dBundle {
             projection: Projection::Perspective(PerspectiveProjection {
-                fov: 30_f32.to_radians(),
+                fov: 20_f32.to_radians(),
                 ..default()
             }),
-            transform: Transform::from_xyz(0., 0., 2000.).looking_at(Vec3::new(0., 0., 0.), Vec3::Y),
+            transform: Transform::from_xyz(0., 0., 6000.).looking_at(Vec3::new(0., 0., 0.), Vec3::Y),
             camera: Camera {
                 order: -100,
                 target: RenderTarget::Image(rt.render_target.clone()),
@@ -62,7 +66,9 @@ fn eyes_init(
 
 
 #[derive(Component)]
-pub struct PhysicsHexagon;
+pub struct PhysicsHexagon {
+    pub hexagon_definition: HexagonDefinition,
+}
 
 /// All colliders and hexagon meshes should be child entities of this
 #[derive(Component)]
@@ -95,7 +101,7 @@ fn spawn_physics_hexagon(
             hexagon_definition.center().y - 1080. / 2.,
             0.,
         )),
-        PhysicsHexagon {},
+        PhysicsHexagon { hexagon_definition },
         FixPerspectiveSubject {
             original_transform: Transform::from_xyz(
                 hexagon_definition.center().x - 1920. / 2.,
@@ -109,7 +115,7 @@ fn spawn_physics_hexagon(
 
     let hexagon_geometry = commands.spawn((
         HexagonGeometry {},
-        SpatialBundle::from_transform(Transform::from_xyz(0., 0., 500.))
+        SpatialBundle::from_transform(Transform::from_xyz(0., 0., 0.))
     )).id();
 
     let hexagon_elements = [
@@ -135,8 +141,8 @@ fn spawn_physics_hexagon(
         let entity = commands.spawn((
             SpatialBundle {
                 transform: Transform::from_xyz(
-                    hexagon_definition.center().x - 1920. / 2.,
-                    hexagon_definition.center().y - 1080. / 2. + n.clone() as f32,
+                    0.,
+                    n.clone() as f32,
                     100. + n as f32 * 100.),
                 ..default()
             },
@@ -145,6 +151,10 @@ fn spawn_physics_hexagon(
             Ccd::enabled(),
             Collider::ball(50.),
             PropagatingRenderLayers{render_layers: RenderLayers::layer(1)},
+            ExternalForce {
+                force: Vec3::Z * -9.81 * 1000.,
+                ..default()
+            }
         )).id();
 
         let eye_mesh = commands.spawn((
@@ -155,6 +165,7 @@ fn spawn_physics_hexagon(
                 ..default()
             }
         )).id();
+        commands.entity(hexagon_entity).push_children(&[entity]);
         commands.entity(entity).push_children(&[
             eye_mesh
         ]);
