@@ -152,7 +152,7 @@ fn spawn_physics_hexagon(
             Collider::ball(50.),
             PropagatingRenderLayers{render_layers: RenderLayers::layer(1)},
             ExternalForce {
-                force: Vec3::Z * -9.81 * 1000.,
+                force: Vec3::Z * -9.81 * 100000.,
                 ..default()
             }
         )).id();
