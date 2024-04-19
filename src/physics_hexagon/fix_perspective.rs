@@ -27,7 +27,7 @@ pub fn fix_perspective_system(
             let scaled_translation = difference.normalize() * (difference.length() - radius);
             let _ = subject_transform.with_translation(fix_perspective_subject.original_transform.translation + scaled_translation);
             // Rotate towards camera
-            subject_transform.look_at(target_transform.translation, Vec3::Y);
+            subject_transform.look_at(target_transform.translation - 2.*difference, Vec3::Y);
         }
     }
 }
