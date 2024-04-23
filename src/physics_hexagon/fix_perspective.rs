@@ -13,7 +13,7 @@ pub struct FixPerspectiveTarget;
 
 /// Place all hexagons along a circle and face them at the camera
 pub fn fix_perspective_system(
-    mut target_query: Query<(&Transform, &FixPerspectiveTarget), Without<FixPerspectiveSubject>>,
+    mut target_query: Query<(&Transform, &FixPerspectiveTarget), (Without<FixPerspectiveSubject>, Changed<Transform>)>,
     mut subject_query: Query<(&mut Transform, &FixPerspectiveSubject), Without<FixPerspectiveTarget>>,
 ) {
     for (target_transform, _) in target_query.iter_mut() {

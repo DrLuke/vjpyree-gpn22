@@ -1,7 +1,7 @@
 //! Implement gravity to be local to each hexagon
 
 use bevy::hierarchy::Children;
-use bevy::prelude::{Changed, Commands, Component, Entity, Query, Transform, Vec3, With};
+use bevy::prelude::{Changed, Commands, Component, Entity, Or, Query, Transform, Vec3, With};
 use bevy::utils::default;
 use bevy_rapier3d::dynamics::RigidBody;
 use bevy_rapier3d::prelude::ExternalForce;
@@ -14,7 +14,7 @@ pub struct LocalGravity {
 
 pub fn local_gravity_system(
     mut commands: Commands,
-    physics_hexagon_query: Query<(&Transform, &LocalGravity, &Children), (With<PhysicsHexagon>, Changed<Transform>, Changed<LocalGravity>)>,
+    physics_hexagon_query: Query<(&Transform, &LocalGravity, &Children), (With<PhysicsHexagon>, Or<(Changed<Transform>, Changed<LocalGravity>)>)>,
     physics_element_query: Query<Entity, (With<HexagonPhysicsElement>, With<RigidBody>)>,
 ) {
     for (transform, local_gravity, children) in physics_hexagon_query.iter() {
