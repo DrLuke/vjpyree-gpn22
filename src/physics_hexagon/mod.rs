@@ -5,6 +5,7 @@ pub mod effectors;
 mod local_gravity;
 
 use std::f32::consts::PI;
+use bevy::ecs::query::QueryEntityError;
 use bevy::prelude::*;
 use bevy::render::camera::{RenderTarget};
 use bevy::render::view::RenderLayers;
@@ -27,6 +28,7 @@ impl Plugin for PhysicsHexagonPlugin {
         app.init_resource::<PhysicsHexagonRenderTarget>();
         app.add_systems(Startup, eyes_init);
         app.add_systems(Update, (fix_perspective_system, local_gravity_system));
+        app.add_systems(Update, hexagon_physics_element_cleanup_system);
     }
 }
 
@@ -266,6 +268,28 @@ fn spawn_floor(
     )).id()
 }
 
-// Tag component for physics objects that are spawned into hexagons that shall be manipulated by effectors
+/// Tag component for physics objects that are spawned into hexagons that shall be manipulated by effectors
 #[derive(Component, Default, Copy, Clone)]
 pub struct HexagonPhysicsElement;
+
+/// Clean up all physics element that dropped out of the Hexagon
+fn hexagon_physics_element_cleanup_system(
+    mut commands: Commands,
+    query: Query<(Entity, &Parent, &Transform), With<HexagonPhysicsElement>>,
+    parent_query: Query<&PhysicsHexagon>
+) {
+    for (entity, parent, transform) in query.iter() {
+        let hexagon_definition = match parent_query.get(parent.get()) {
+            Ok(phyics_hexagon) => { phyics_hexagon.hexagon_definition }
+            Err(_) => { HexagonDefinition::Main }
+        };
+
+        if transform.translation.truncate().length() > (hexagon_definition.size().x * 1.1 / 2.) {
+            commands.entity(entity).despawn_recursive();
+        }
+
+        if transform.translation.z.abs() > 1000. {
+            commands.entity(entity).despawn_recursive();
+        }
+    }
+}
