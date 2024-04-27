@@ -3,6 +3,7 @@ mod fix_perspective;
 pub mod render;
 pub mod effectors;
 mod local_gravity;
+pub mod lights;
 
 use std::f32::consts::PI;
 use bevy::ecs::query::QueryEntityError;
@@ -16,6 +17,7 @@ use crate::hexagon::HexagonDefinition;
 use crate::physics_hexagon::effectors::EffectorsPlugin;
 use crate::physics_hexagon::fix_perspective::{fix_perspective_system, FixPerspectiveSubject, FixPerspectiveTarget};
 use crate::physics_hexagon::hexagon_colliders::spawn_hexagon_collier;
+use crate::physics_hexagon::lights::LightsPlugin;
 use crate::physics_hexagon::local_gravity::{local_gravity_system, LocalGravity};
 use crate::physics_hexagon::render::PhysicsHexagonRenderTarget;
 use crate::propagating_render_layers::PropagatingRenderLayers;
@@ -24,7 +26,7 @@ pub struct PhysicsHexagonPlugin;
 
 impl Plugin for PhysicsHexagonPlugin {
     fn build(&self, app: &mut App) {
-        app.add_plugins(EffectorsPlugin);
+        app.add_plugins((EffectorsPlugin, LightsPlugin));
         app.init_resource::<PhysicsHexagonRenderTarget>();
         app.add_systems(Startup, eyes_init);
         app.add_systems(Update, (fix_perspective_system, local_gravity_system));

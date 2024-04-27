@@ -10,6 +10,8 @@ bevy = { version = "0.13.1", features = ["jpeg"] }
 bevy_rapier3d = "*"
 bevy-inspector-egui = "*"
 bevy_egui = "*"
+strum_macros = "0.26.2"
+strum = { version = "0.26.2" , features = ["strum_macros"]}
 
 [profile.dev.package."*"]
 opt-level = 3
