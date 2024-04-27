@@ -105,7 +105,7 @@ fn spawn_physics_hexagon(
             hexagon_definition.center().x - 1920. / 2.,
             hexagon_definition.center().y - 1080. / 2.,
             0.,
-        ).with_scale(Vec3::splat(size_scale))),
+        )),
         PhysicsHexagon { hexagon_definition },
         FixPerspectiveSubject {
             original_transform: Transform::from_xyz(
@@ -123,7 +123,7 @@ fn spawn_physics_hexagon(
 
     let hexagon_geometry = commands.spawn((
         HexagonGeometry {},
-        SpatialBundle::from_transform(Transform::from_xyz(0., 0., 0.))
+        SpatialBundle::from_transform(Transform::from_xyz(0., 0., 0.).with_scale(Vec3::splat(size_scale)))
     )).id();
 
     let hexagon_elements = [
