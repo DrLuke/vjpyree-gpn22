@@ -95,6 +95,7 @@ fn spawn_physics_hexagon(
     let wall_height = 500.;
     let inner_radius = 3_f32.sqrt() / 2. * radius;
     let floor_thickness = 10.;
+    let size_scale = 0.95; // Scale down 3d hexagons so they fit into 2d footprint
 
     let wall = meshes.add(Cuboid::new(radius.clone(), wall_width.clone(), wall_height));
     let floor = meshes.add(Cuboid::new(radius.clone(), inner_radius.clone() * 2., floor_thickness.clone()));
@@ -104,7 +105,7 @@ fn spawn_physics_hexagon(
             hexagon_definition.center().x - 1920. / 2.,
             hexagon_definition.center().y - 1080. / 2.,
             0.,
-        )),
+        ).with_scale(Vec3::splat(size_scale))),
         PhysicsHexagon { hexagon_definition },
         FixPerspectiveSubject {
             original_transform: Transform::from_xyz(
