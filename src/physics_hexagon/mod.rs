@@ -42,14 +42,14 @@ fn eyes_init(
     commands.spawn((
         Camera3dBundle {
             projection: Projection::Perspective(PerspectiveProjection {
-                fov: 20_f32.to_radians(),
+                fov: 0.27, // Experimentally determined
                 ..default()
             }),
             transform: Transform::from_xyz(0., 0., 4000.).looking_at(Vec3::new(0., 0., 0.), Vec3::Y),
             camera: Camera {
                 order: -100,
                 target: RenderTarget::Image(rt.render_target.clone()),
-                clear_color: Color::BLACK.into(),
+                clear_color: Color::rgba(0., 0., 0., 0.).into(),
                 ..default()
             },
             ..Camera3dBundle::default()

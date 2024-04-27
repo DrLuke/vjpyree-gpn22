@@ -28,7 +28,7 @@ fn main() {
         .add_plugins(RapierPhysicsPlugin::<NoUserData>::default().with_physics_scale(10.))
         .add_plugins(RapierDebugRenderPlugin::default())
         .add_plugins(PropagatingRenderLayersPlugin)
-        //.add_plugins(HexagonPlugin)
+        .add_plugins(HexagonPlugin)
         .add_plugins(RenderOutPlugin)
         .add_plugins(PhysicsHexagonPlugin)
         .add_plugins(GuiPlugin)
