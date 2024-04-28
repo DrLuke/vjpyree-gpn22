@@ -62,7 +62,7 @@ fn spawn_hexagons(
             RegularPolygon::new(HexagonDefinition::size(&hexagon).x / 2., 6)
         ));
 
-        commands.spawn((
+        /*commands.spawn((
             MaterialMesh2dBundle {
                 mesh,
                 material: materials.add(Color::rgba(0.3, 1., 0.3, 0.2)),
@@ -75,7 +75,7 @@ fn spawn_hexagons(
                 ..default()
             },
             PropagatingRenderLayers { render_layers: RenderLayers::layer(2) }
-        ));
+        ));*/
     }
 }
 

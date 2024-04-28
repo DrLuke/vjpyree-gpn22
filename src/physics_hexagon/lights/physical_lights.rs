@@ -112,10 +112,10 @@ pub fn spawn_physical_led_tube(
                 },
                 SpotLightBundle {
                     spot_light: SpotLight{
-                        intensity: 200_000_000.0 / LEDS_COUNT as f32,
+                        intensity: 500_000_000.0 / LEDS_COUNT as f32,
                         range: 3000.0,
                         radius: 15.,
-                        color: Color::WHITE,
+                        color: Color::ORANGE_RED,
                         shadows_enabled: false,
                         outer_angle: PI/4.,
                         inner_angle: PI/6.,

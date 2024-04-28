@@ -21,7 +21,7 @@ fn main() {
         .add_plugins(EguiPlugin)
         .add_plugins(WorldInspectorPlugin::new())
         .insert_resource(RapierConfiguration {
-            gravity: Vect::zeroed(),
+            gravity: Vec3::Z * -9.81 * 100.,
 
             ..default()
         })

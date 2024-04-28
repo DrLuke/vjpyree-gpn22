@@ -1,8 +1,6 @@
 mod hexagon_colliders;
-mod fix_perspective;
 pub mod render;
 pub mod effectors;
-mod local_gravity;
 pub mod lights;
 
 use std::f32::consts::PI;
@@ -14,11 +12,9 @@ use bevy::render::view::RenderLayers;
 use bevy_rapier3d::prelude::{Ccd, Collider, RigidBody};
 use crate::hexagon::HexagonDefinition;
 use crate::physics_hexagon::effectors::EffectorsPlugin;
-use crate::physics_hexagon::fix_perspective::{fix_perspective_system, FixPerspectiveSubject, FixPerspectiveTarget};
 use crate::physics_hexagon::hexagon_colliders::spawn_hexagon_collier;
 use crate::physics_hexagon::lights::{spawn_led_tubes, spawn_physical_lights};
 use crate::physics_hexagon::lights::physical_lights::HexagonLights;
-use crate::physics_hexagon::local_gravity::{local_gravity_system, LocalGravity};
 use crate::physics_hexagon::render::PhysicsHexagonRenderTarget;
 use crate::propagating_render_layers::PropagatingRenderLayers;
 
@@ -33,7 +29,6 @@ impl Plugin for PhysicsHexagonPlugin {
             spawn_led_tubes.after(init_physics_hexagons),
             spawn_physical_lights.after(spawn_led_tubes)
         ));
-        app.add_systems(Update, (fix_perspective_system, local_gravity_system));
         app.add_systems(Update, hexagon_physics_element_cleanup_system);
     }
 }
@@ -48,10 +43,10 @@ fn init_physics_hexagons(
     commands.spawn((
         Camera3dBundle {
             projection: Projection::Perspective(PerspectiveProjection {
-                fov: 0.27, // Experimentally determined
+                fov: 0.77, // Experimentally determined
                 ..default()
             }),
-            transform: Transform::from_xyz(0., 0., 4000.).looking_at(Vec3::new(0., 0., 0.), Vec3::Y),
+            transform: Transform::from_xyz(0., 0., 1500.).looking_at(Vec3::new(0., 0., 0.), Vec3::Y),
             camera: Camera {
                 order: -100,
                 target: RenderTarget::Image(rt.render_target.clone()),
@@ -63,18 +58,11 @@ fn init_physics_hexagons(
             ..Camera3dBundle::default()
         },
         BloomSettings::NATURAL,
-        FixPerspectiveTarget {},
         PropagatingRenderLayers { render_layers: RenderLayers::layer(10) },
     ));
 
 
     spawn_physics_hexagon(&mut commands, &mut meshes, &mut materials, &asset_server, HexagonDefinition::Main);
-    spawn_physics_hexagon(&mut commands, &mut meshes, &mut materials, &asset_server, HexagonDefinition::A1);
-    spawn_physics_hexagon(&mut commands, &mut meshes, &mut materials, &asset_server, HexagonDefinition::B1);
-    spawn_physics_hexagon(&mut commands, &mut meshes, &mut materials, &asset_server, HexagonDefinition::A2);
-    spawn_physics_hexagon(&mut commands, &mut meshes, &mut materials, &asset_server, HexagonDefinition::B2);
-    spawn_physics_hexagon(&mut commands, &mut meshes, &mut materials, &asset_server, HexagonDefinition::A3);
-    spawn_physics_hexagon(&mut commands, &mut meshes, &mut materials, &asset_server, HexagonDefinition::B3);
 }
 
 
@@ -116,16 +104,6 @@ fn spawn_physics_hexagon(
             0.,
         )),
         PhysicsHexagon { hexagon_definition },
-        FixPerspectiveSubject {
-            original_transform: Transform::from_xyz(
-                hexagon_definition.center().x - 1920. / 2.,
-                hexagon_definition.center().y - 1080. / 2.,
-                0.0,
-            )
-        },
-        LocalGravity {
-            gravity: Vec3::Z * -9.81 * 100000.
-        },
         PropagatingRenderLayers { render_layers: hexagon_definition.get_render_layers() },
     )
     ).id();
@@ -154,7 +132,7 @@ fn spawn_physics_hexagon(
     let eye_01: Handle<Mesh> = asset_server.load("eye_01.glb#Mesh0/Primitive0");
     let eye_01_material: Handle<StandardMaterial> = asset_server.load("eye_01.glb#Material0");
 
-    for n in 1..10 {
+    for n in 1..30 {
         let entity = commands.spawn((
             SpatialBundle {
                 transform: Transform::from_xyz(
@@ -307,7 +285,7 @@ fn hexagon_physics_element_cleanup_system(
             commands.entity(entity).despawn_recursive();
         }
 
-        if transform.translation.z.abs() > 1000. {
+        if transform.translation.z.abs() > 10000. {
             commands.entity(entity).despawn_recursive();
         }
     }
