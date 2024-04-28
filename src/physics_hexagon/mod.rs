@@ -13,7 +13,7 @@ use bevy_rapier3d::prelude::{Ccd, Collider, RigidBody};
 use crate::hexagon::HexagonDefinition;
 use crate::physics_hexagon::effectors::EffectorsPlugin;
 use crate::physics_hexagon::hexagon_colliders::spawn_hexagon_collier;
-use crate::physics_hexagon::lights::{spawn_led_tubes, spawn_physical_lights};
+use crate::physics_hexagon::lights::{spawn_led_tubes};
 use crate::physics_hexagon::lights::physical_lights::{HexagonLights, spawn_physical_leds};
 use crate::physics_hexagon::render::PhysicsHexagonRenderTarget;
 use crate::propagating_render_layers::PropagatingRenderLayers;
@@ -58,7 +58,7 @@ fn init_physics_hexagons(
             ..Camera3dBundle::default()
         },
         BloomSettings::NATURAL,
-        PropagatingRenderLayers { render_layers: RenderLayers::layer(1) },
+        PropagatingRenderLayers { render_layers: RenderLayers::from_iter(0..2) },
     ));
 
 

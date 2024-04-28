@@ -5,7 +5,7 @@ use bevy::utils::default;
 use strum_macros::EnumIter;
 
 pub const TUBE_LENGTH: f32 = 173.;
-pub const LEDS_COUNT: isize = 16;
+pub const LEDS_COUNT: isize = 32;
 
 #[derive(Copy, Clone, EnumIter, Eq, PartialEq, Debug)]
 pub enum TubeIndex {
