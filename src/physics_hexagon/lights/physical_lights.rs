@@ -9,7 +9,7 @@ use crate::physics_hexagon::lights::led_tube::{LEDS_COUNT, LedTube, LedTubeLed, 
 use crate::physics_hexagon::PhysicsHexagon;
 use crate::propagating_render_layers::PropagatingRenderLayers;
 
-const EDGE_LENGTH: f32 = 270.;
+const EDGE_LENGTH: f32 = 340.; // 365. is the actual length, but it's a bit shortened for less edge overlap
 const EDGE_LED_COUNT: i32 = 32;
 const EDGE_LED_DIVISOR: i32 = 4;
 const ACTUAL_EDGE_LED_COUNT: i32 = EDGE_LED_COUNT/EDGE_LED_DIVISOR;
