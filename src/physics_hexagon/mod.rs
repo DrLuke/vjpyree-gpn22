@@ -7,6 +7,7 @@ pub mod lights;
 
 use std::f32::consts::PI;
 use bevy::ecs::query::QueryEntityError;
+use bevy::pbr::ClusterConfig;
 use bevy::prelude::*;
 use bevy::render::camera::{RenderTarget};
 use bevy::render::view::RenderLayers;
@@ -17,7 +18,7 @@ use crate::hexagon::HexagonDefinition;
 use crate::physics_hexagon::effectors::EffectorsPlugin;
 use crate::physics_hexagon::fix_perspective::{fix_perspective_system, FixPerspectiveSubject, FixPerspectiveTarget};
 use crate::physics_hexagon::hexagon_colliders::spawn_hexagon_collier;
-use crate::physics_hexagon::lights::LightsPlugin;
+use crate::physics_hexagon::lights::{spawn_led_tubes, spawn_physical_lights};
 use crate::physics_hexagon::local_gravity::{local_gravity_system, LocalGravity};
 use crate::physics_hexagon::render::PhysicsHexagonRenderTarget;
 use crate::propagating_render_layers::PropagatingRenderLayers;
@@ -26,15 +27,19 @@ pub struct PhysicsHexagonPlugin;
 
 impl Plugin for PhysicsHexagonPlugin {
     fn build(&self, app: &mut App) {
-        app.add_plugins((EffectorsPlugin, LightsPlugin));
+        app.add_plugins((EffectorsPlugin));
         app.init_resource::<PhysicsHexagonRenderTarget>();
-        app.add_systems(Startup, eyes_init);
+        app.add_systems(Startup, (
+            init_physics_hexagons,
+            spawn_led_tubes.after(init_physics_hexagons),
+            spawn_physical_lights.after(spawn_led_tubes)
+        ));
         app.add_systems(Update, (fix_perspective_system, local_gravity_system));
         app.add_systems(Update, hexagon_physics_element_cleanup_system);
     }
 }
 
-fn eyes_init(
+fn init_physics_hexagons(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
@@ -183,6 +188,7 @@ fn spawn_physics_hexagon(
             point_light: PointLight {
                 intensity: 100_000_000.0,
                 range: 40_000.0,
+                radius: 100.,
                 color: Color::WHITE,
                 shadows_enabled: true,
                 ..default()
@@ -196,6 +202,7 @@ fn spawn_physics_hexagon(
             point_light: PointLight {
                 intensity: 300_000_000.0,
                 range: 40_000.0,
+                radius: 100.,
                 color: Color::RED,
                 shadows_enabled: true,
                 ..default()
@@ -208,6 +215,7 @@ fn spawn_physics_hexagon(
             point_light: PointLight {
                 intensity: 300_000_000.0,
                 range: 40_0000.0,
+                radius: 100.,
                 color: Color::BLUE,
                 shadows_enabled: true,
                 ..default()

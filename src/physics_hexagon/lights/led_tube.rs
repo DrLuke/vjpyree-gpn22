@@ -4,7 +4,10 @@ use bevy::prelude::{Commands, Component, SpatialBundle, Transform, Vec2, Vec3, B
 use bevy::utils::default;
 use strum_macros::EnumIter;
 
-#[derive(Copy, Clone, EnumIter)]
+pub const TUBE_LENGTH: f32 = 173.;
+pub const LEDS_COUNT: isize = 2;
+
+#[derive(Copy, Clone, EnumIter, Eq, PartialEq, Debug)]
 pub enum TubeIndex {
     One,
     Two,
@@ -81,27 +84,27 @@ impl TubeIndex {
     pub fn get_rotation(&self) -> f32 {
         match self {
             TubeIndex::One => { 0. } // ✅
-            TubeIndex::Two => { 0. } // ✅
+            TubeIndex::Two => { PI } // ✅
             TubeIndex::Three => { -PI / 3. } // ✅
-            TubeIndex::Four => { PI / 3. } // ✅
+            TubeIndex::Four => { PI / 3. + PI  } // ✅
             TubeIndex::Five => { 0. } // ✅
             TubeIndex::Six => { PI / 3. } // ✅
-            TubeIndex::Seven => { -PI / 3. } // ✅
+            TubeIndex::Seven => { -PI / 3. + PI } // ✅
             TubeIndex::Eight => { PI / 3. } // ✅
-            TubeIndex::Nine => { -PI / 3. } // ✅
+            TubeIndex::Nine => { -PI / 3. + PI } // ✅
             TubeIndex::Ten => { 0. } // ✅
-            TubeIndex::Eleven => { 0. } // ✅
+            TubeIndex::Eleven => { PI } // ✅
             TubeIndex::Twelve => { 0. } // ✅
-            TubeIndex::Thirteen => { 0. } // ✅
+            TubeIndex::Thirteen => { PI } // ✅
             TubeIndex::Fourteen => { -PI / 3. } // ✅
-            TubeIndex::Fifteen => { PI / 3. } // ✅
+            TubeIndex::Fifteen => { PI / 3. + PI } // ✅
             TubeIndex::Sixteen => { -PI / 3. } // ✅
-            TubeIndex::Seventeen => { PI / 3. } // ✅
+            TubeIndex::Seventeen => { PI / 3. + PI } // ✅
             TubeIndex::Eighteen => { 0. } // ✅
             TubeIndex::Nineteen => { PI / 3. } // ✅
-            TubeIndex::Twenty => { -PI / 3. } // ✅
+            TubeIndex::Twenty => { -PI / 3. + PI  } // ✅
             TubeIndex::Twentyone => { 0. } // ✅
-            TubeIndex::Twentytwo => { 0. } // ✅
+            TubeIndex::Twentytwo => { PI } // ✅
         }
     }
 }
@@ -121,7 +124,11 @@ impl LedTube {
 #[derive(Component, Default)]
 pub struct LedTubeLed {
     index: isize,
-    color: Color,
+    pub color: Color,
+}
+
+impl LedTubeLed {
+    pub fn get_index(&self) -> isize { self.index }
 }
 
 pub fn spawn_tube(
@@ -140,12 +147,10 @@ pub fn spawn_tube(
         }
     )).id();
 
-    let tube_length = 173.;
-    let leds_count = 16;
-    let step = tube_length / leds_count as f32;
+    let step = TUBE_LENGTH / LEDS_COUNT as f32;
 
-    for i in 0..leds_count {
-        let offset = tube_length / 2. + step * i as f32;
+    for i in 0..LEDS_COUNT {
+        let offset = TUBE_LENGTH / 2. + step * i as f32 - TUBE_LENGTH;
         let led_tube_led_entity = commands.spawn((
             LedTubeLed { index: i, ..default() },
             SpatialBundle {
