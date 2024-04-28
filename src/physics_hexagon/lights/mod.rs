@@ -8,7 +8,7 @@ use crate::physics_hexagon::lights::physical_lights::spawn_physical_led_tube;
 use crate::physics_hexagon::PhysicsHexagon;
 
 pub mod led_tube;
-mod physical_lights;
+pub mod physical_lights;
 
 pub fn spawn_led_tubes(
     mut commands: Commands

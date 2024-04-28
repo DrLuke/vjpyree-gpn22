@@ -85,7 +85,6 @@ pub fn spawn_physical_led_tube(
             let root_entity = commands.spawn((
                 HexagonLights,
                 SpatialBundle::default(),
-                PropagatingRenderLayers{render_layers: RenderLayers::layer(1)}
             )).id();
             commands.entity(physics_hexagon_entity).push_children(&[root_entity]);
             root_entity

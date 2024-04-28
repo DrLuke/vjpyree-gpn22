@@ -6,19 +6,18 @@ mod local_gravity;
 pub mod lights;
 
 use std::f32::consts::PI;
-use bevy::ecs::query::QueryEntityError;
-use bevy::pbr::ClusterConfig;
+use bevy::core_pipeline::bloom::BloomSettings;
+use bevy::core_pipeline::tonemapping::Tonemapping;
 use bevy::prelude::*;
 use bevy::render::camera::{RenderTarget};
 use bevy::render::view::RenderLayers;
-use bevy_rapier3d::dynamics::ExternalForce;
-use bevy_rapier3d::math::Vect;
 use bevy_rapier3d::prelude::{Ccd, Collider, RigidBody};
 use crate::hexagon::HexagonDefinition;
 use crate::physics_hexagon::effectors::EffectorsPlugin;
 use crate::physics_hexagon::fix_perspective::{fix_perspective_system, FixPerspectiveSubject, FixPerspectiveTarget};
 use crate::physics_hexagon::hexagon_colliders::spawn_hexagon_collier;
 use crate::physics_hexagon::lights::{spawn_led_tubes, spawn_physical_lights};
+use crate::physics_hexagon::lights::physical_lights::HexagonLights;
 use crate::physics_hexagon::local_gravity::{local_gravity_system, LocalGravity};
 use crate::physics_hexagon::render::PhysicsHexagonRenderTarget;
 use crate::propagating_render_layers::PropagatingRenderLayers;
@@ -57,12 +56,15 @@ fn init_physics_hexagons(
                 order: -100,
                 target: RenderTarget::Image(rt.render_target.clone()),
                 clear_color: Color::rgba(0., 0., 0., 0.).into(),
+                hdr: true,
                 ..default()
             },
+            tonemapping: Tonemapping::TonyMcMapface,
             ..Camera3dBundle::default()
         },
+        BloomSettings::NATURAL,
         FixPerspectiveTarget {},
-        PropagatingRenderLayers{render_layers: RenderLayers::all()},
+        PropagatingRenderLayers { render_layers: RenderLayers::layer(10) },
     ));
 
 
@@ -124,7 +126,7 @@ fn spawn_physics_hexagon(
         LocalGravity {
             gravity: Vec3::Z * -9.81 * 100000.
         },
-        PropagatingRenderLayers{render_layers: RenderLayers::layer(1)},
+        PropagatingRenderLayers { render_layers: hexagon_definition.get_render_layers() },
     )
     ).id();
 
@@ -165,7 +167,7 @@ fn spawn_physics_hexagon(
             RigidBody::Dynamic,
             Ccd::enabled(),
             Collider::ball(50.),
-            PropagatingRenderLayers{render_layers: RenderLayers::layer(1)},
+            PropagatingRenderLayers { render_layers: hexagon_definition.get_render_layers() },
         )).id();
 
         let eye_mesh = commands.spawn((
@@ -182,6 +184,12 @@ fn spawn_physics_hexagon(
         ]);
     }
 
+    let hexagon_lights_entity = commands.spawn((
+        HexagonLights {},
+        SpatialBundle::default(),
+    )).id();
+    commands.entity(hexagon_entity).push_children(&[hexagon_lights_entity]);
+
     commands
         .spawn((PointLightBundle {
             transform: Transform::from_xyz(hexagon_definition.center().x - 1920. / 2., hexagon_definition.center().y - 1080. / 2., 100.0),
@@ -194,7 +202,7 @@ fn spawn_physics_hexagon(
                 ..default()
             },
             ..default()
-        },PropagatingRenderLayers{render_layers: RenderLayers::layer(1)}));
+        }, PropagatingRenderLayers { render_layers: hexagon_definition.get_render_layers() }));
 
     commands
         .spawn((PointLightBundle {
@@ -208,7 +216,7 @@ fn spawn_physics_hexagon(
                 ..default()
             },
             ..default()
-        },PropagatingRenderLayers{render_layers: RenderLayers::layer(1)}));
+        }, PropagatingRenderLayers { render_layers: hexagon_definition.get_render_layers() }));
     commands
         .spawn((PointLightBundle {
             transform: Transform::from_xyz(hexagon_definition.center().x - 1920. / 2. - 100., hexagon_definition.center().y - 1080. / 2., 150.0),
@@ -221,7 +229,7 @@ fn spawn_physics_hexagon(
                 ..default()
             },
             ..default()
-        },PropagatingRenderLayers{render_layers: RenderLayers::layer(1)}));
+        }, PropagatingRenderLayers { render_layers: hexagon_definition.get_render_layers() }));
 
     return hexagon_entity;
 }
@@ -287,7 +295,7 @@ pub struct HexagonPhysicsElement;
 fn hexagon_physics_element_cleanup_system(
     mut commands: Commands,
     query: Query<(Entity, &Parent, &Transform), With<HexagonPhysicsElement>>,
-    parent_query: Query<&PhysicsHexagon>
+    parent_query: Query<&PhysicsHexagon>,
 ) {
     for (entity, parent, transform) in query.iter() {
         let hexagon_definition = match parent_query.get(parent.get()) {

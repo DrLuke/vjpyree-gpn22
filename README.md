@@ -3,6 +3,6 @@
 
 
 ## Render Layers
-* **1**: Physics Hexagons
+* **10-16**: Physics Hexagons
 * **2**: Debug Hexagons
 * **32**: Final Render to screen

@@ -1,4 +1,5 @@
 use bevy::prelude::{Component, Vec2};
+use bevy::render::view::RenderLayers;
 
 #[derive(Copy, Clone, Eq, PartialEq, Debug)]
 pub enum HexagonDefinition {
@@ -28,6 +29,18 @@ impl HexagonDefinition {
         match self {
             HexagonDefinition::Main => Vec2::new(730.0, 632.0),
             _ => Vec2::new(346.0, 299.0),
+        }
+    }
+
+    pub fn get_render_layers(&self) -> RenderLayers {
+        match self {
+            HexagonDefinition::Main => { RenderLayers::layer(10) }
+            HexagonDefinition::A1 => { RenderLayers::layer(11) }
+            HexagonDefinition::A2 => { RenderLayers::layer(12) }
+            HexagonDefinition::A3 => { RenderLayers::layer(13) }
+            HexagonDefinition::B1 => { RenderLayers::layer(14) }
+            HexagonDefinition::B2 => { RenderLayers::layer(15) }
+            HexagonDefinition::B3 => { RenderLayers::layer(16) }
         }
     }
 }
