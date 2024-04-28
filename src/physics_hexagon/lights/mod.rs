@@ -39,33 +39,6 @@ pub fn spawn_physical_lights(
         (HexagonDefinition::Main, TubeIndex::Fifteen),
         (HexagonDefinition::Main, TubeIndex::Sixteen),
         (HexagonDefinition::Main, TubeIndex::Seventeen),
-        // Left
-        (HexagonDefinition::A2, TubeIndex::One),
-        (HexagonDefinition::A2, TubeIndex::Two),
-        (HexagonDefinition::A2, TubeIndex::Three),
-        (HexagonDefinition::A2, TubeIndex::Four),
-
-        (HexagonDefinition::A1, TubeIndex::Three),
-        (HexagonDefinition::A1, TubeIndex::Five),
-        (HexagonDefinition::A1, TubeIndex::Six),
-
-        (HexagonDefinition::A3, TubeIndex::Four),
-        (HexagonDefinition::A3, TubeIndex::Five),
-        (HexagonDefinition::A3, TubeIndex::Seven),
-
-        // Right
-        (HexagonDefinition::B2, TubeIndex::Nineteen),
-        (HexagonDefinition::B2, TubeIndex::Twenty),
-        (HexagonDefinition::B2, TubeIndex::Twentyone),
-        (HexagonDefinition::B2, TubeIndex::Twentytwo),
-
-        (HexagonDefinition::B1, TubeIndex::Sixteen),
-        (HexagonDefinition::B1, TubeIndex::Eighteen),
-        (HexagonDefinition::B1, TubeIndex::Nineteen),
-
-        (HexagonDefinition::B3, TubeIndex::Seventeen),
-        (HexagonDefinition::B3, TubeIndex::Eighteen),
-        (HexagonDefinition::B3, TubeIndex::Twenty),
     ];
 
     for (hd, ti) in config {

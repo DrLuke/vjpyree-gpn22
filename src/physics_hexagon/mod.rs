@@ -14,7 +14,7 @@ use crate::hexagon::HexagonDefinition;
 use crate::physics_hexagon::effectors::EffectorsPlugin;
 use crate::physics_hexagon::hexagon_colliders::spawn_hexagon_collier;
 use crate::physics_hexagon::lights::{spawn_led_tubes, spawn_physical_lights};
-use crate::physics_hexagon::lights::physical_lights::HexagonLights;
+use crate::physics_hexagon::lights::physical_lights::{HexagonLights, spawn_physical_leds};
 use crate::physics_hexagon::render::PhysicsHexagonRenderTarget;
 use crate::propagating_render_layers::PropagatingRenderLayers;
 
@@ -27,7 +27,7 @@ impl Plugin for PhysicsHexagonPlugin {
         app.add_systems(Startup, (
             init_physics_hexagons,
             spawn_led_tubes.after(init_physics_hexagons),
-            spawn_physical_lights.after(spawn_led_tubes)
+            spawn_physical_leds.after(spawn_led_tubes)
         ));
         app.add_systems(Update, hexagon_physics_element_cleanup_system);
     }
@@ -58,7 +58,7 @@ fn init_physics_hexagons(
             ..Camera3dBundle::default()
         },
         BloomSettings::NATURAL,
-        PropagatingRenderLayers { render_layers: RenderLayers::layer(10) },
+        PropagatingRenderLayers { render_layers: RenderLayers::layer(1) },
     ));
 
 
@@ -104,9 +104,17 @@ fn spawn_physics_hexagon(
             0.,
         )),
         PhysicsHexagon { hexagon_definition },
-        PropagatingRenderLayers { render_layers: hexagon_definition.get_render_layers() },
+        PropagatingRenderLayers { render_layers: RenderLayers::layer(1) },
     )
-    ).id();
+    )
+        .with_children(|mut child_builder| {
+            child_builder.spawn((
+                HexagonLights {},
+                SpatialBundle::default(),
+            ));
+        })
+        .id();
+
 
     let hexagon_geometry = commands.spawn((
         HexagonGeometry {},
@@ -132,7 +140,7 @@ fn spawn_physics_hexagon(
     let eye_01: Handle<Mesh> = asset_server.load("eye_01.glb#Mesh0/Primitive0");
     let eye_01_material: Handle<StandardMaterial> = asset_server.load("eye_01.glb#Material0");
 
-    for n in 1..30 {
+    for n in 1..10 {
         let entity = commands.spawn((
             SpatialBundle {
                 transform: Transform::from_xyz(
@@ -145,7 +153,7 @@ fn spawn_physics_hexagon(
             RigidBody::Dynamic,
             Ccd::enabled(),
             Collider::ball(50.),
-            PropagatingRenderLayers { render_layers: hexagon_definition.get_render_layers() },
+            PropagatingRenderLayers { render_layers: RenderLayers::layer(1) },
         )).id();
 
         let eye_mesh = commands.spawn((
@@ -162,13 +170,7 @@ fn spawn_physics_hexagon(
         ]);
     }
 
-    let hexagon_lights_entity = commands.spawn((
-        HexagonLights {},
-        SpatialBundle::default(),
-    )).id();
-    commands.entity(hexagon_entity).push_children(&[hexagon_lights_entity]);
-
-    commands
+    /*commands
         .spawn((PointLightBundle {
             transform: Transform::from_xyz(hexagon_definition.center().x - 1920. / 2., hexagon_definition.center().y - 1080. / 2., 100.0),
             point_light: PointLight {
@@ -180,7 +182,7 @@ fn spawn_physics_hexagon(
                 ..default()
             },
             ..default()
-        }, PropagatingRenderLayers { render_layers: hexagon_definition.get_render_layers() }));
+        }, PropagatingRenderLayers { render_layers: RenderLayers::layer(1) }));*/
 
     commands
         .spawn((PointLightBundle {
@@ -194,7 +196,7 @@ fn spawn_physics_hexagon(
                 ..default()
             },
             ..default()
-        }, PropagatingRenderLayers { render_layers: hexagon_definition.get_render_layers() }));
+        }, PropagatingRenderLayers { render_layers: RenderLayers::layer(1) }));
     commands
         .spawn((PointLightBundle {
             transform: Transform::from_xyz(hexagon_definition.center().x - 1920. / 2. - 100., hexagon_definition.center().y - 1080. / 2., 150.0),
@@ -207,7 +209,7 @@ fn spawn_physics_hexagon(
                 ..default()
             },
             ..default()
-        }, PropagatingRenderLayers { render_layers: hexagon_definition.get_render_layers() }));
+        }, PropagatingRenderLayers { render_layers: RenderLayers::layer(1) }));
 
     return hexagon_entity;
 }
