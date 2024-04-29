@@ -117,7 +117,7 @@ pub fn spawn_physical_leds(
             let led_entity = commands.spawn((
                 SpotLightBundle {
                     spot_light: SpotLight {
-                        intensity: 500_000_000.0 / ACTUAL_EDGE_LED_COUNT as f32,
+                        intensity: 500_000_000.0,
                         range: 3000.0,
                         radius: 5.,
                         color: Color::ORANGE_RED,
@@ -131,10 +131,9 @@ pub fn spawn_physical_leds(
                 },
                 PhysicalLedTubeLed {
                     index: led_tube_led_index,
-                    led_tube_leds: get_led_tube_led_entities(led_tube_led_index as i32, &led_tube_query, &led_tube_led_query)
+                    led_tube_leds: get_led_tube_led_entities(led_tube_led_index as i32, &led_tube_query, &led_tube_led_query),
                 }
             )).id();
-            // TODO: link to LedTubeLed that is driving the LED
             commands.entity(tube_entity).push_children(&[led_entity]);
         }
     }
@@ -145,7 +144,6 @@ fn get_led_tube_led_entities(
     led_tube_query: &Query<(&LedTube, &Children)>,
     led_tube_led_query: &Query<&LedTubeLed>,
 ) -> Vec<Entity> {
-
     let tube_index = map_index_to_tube_index(index);
     let Some((led_tube, led_tube_led_entities)) = led_tube_query
         .iter()
@@ -176,19 +174,51 @@ fn get_led_tube_led_entities(
 fn map_index_to_tube_index(
     index: i32,
 ) -> TubeIndex {
-    if (00*LIGHTS_PER_TUBE..01*LIGHTS_PER_TUBE).contains(&index) { return TubeIndex::Six };
-    if (01*LIGHTS_PER_TUBE..02*LIGHTS_PER_TUBE).contains(&index) { return TubeIndex::Eight };
-    if (02*LIGHTS_PER_TUBE..03*LIGHTS_PER_TUBE).contains(&index) { return TubeIndex::Ten };
-    if (03*LIGHTS_PER_TUBE..04*LIGHTS_PER_TUBE).contains(&index) { return TubeIndex::Twelve };
-    if (04*LIGHTS_PER_TUBE..05*LIGHTS_PER_TUBE).contains(&index) { return TubeIndex::Fourteen };
-    if (05*LIGHTS_PER_TUBE..06*LIGHTS_PER_TUBE).contains(&index) { return TubeIndex::Sixteen };
-    if (06*LIGHTS_PER_TUBE..07*LIGHTS_PER_TUBE).contains(&index) { return TubeIndex::Seventeen };
-    if (07*LIGHTS_PER_TUBE..08*LIGHTS_PER_TUBE).contains(&index) { return TubeIndex::Fifteen };
-    if (08*LIGHTS_PER_TUBE..09*LIGHTS_PER_TUBE).contains(&index) { return TubeIndex::Thirteen };
-    if (09*LIGHTS_PER_TUBE..10*LIGHTS_PER_TUBE).contains(&index) { return TubeIndex::Eleven };
-    if (10*LIGHTS_PER_TUBE..11*LIGHTS_PER_TUBE).contains(&index) { return TubeIndex::Nine };
-    if (11*LIGHTS_PER_TUBE..12*LIGHTS_PER_TUBE).contains(&index) { return TubeIndex::Seven };
+    if (00 * LIGHTS_PER_TUBE..01 * LIGHTS_PER_TUBE).contains(&index) { return TubeIndex::Six; };
+    if (01 * LIGHTS_PER_TUBE..02 * LIGHTS_PER_TUBE).contains(&index) { return TubeIndex::Eight; };
+    if (02 * LIGHTS_PER_TUBE..03 * LIGHTS_PER_TUBE).contains(&index) { return TubeIndex::Ten; };
+    if (03 * LIGHTS_PER_TUBE..04 * LIGHTS_PER_TUBE).contains(&index) { return TubeIndex::Twelve; };
+    if (04 * LIGHTS_PER_TUBE..05 * LIGHTS_PER_TUBE).contains(&index) { return TubeIndex::Fourteen; };
+    if (05 * LIGHTS_PER_TUBE..06 * LIGHTS_PER_TUBE).contains(&index) { return TubeIndex::Sixteen; };
+    if (06 * LIGHTS_PER_TUBE..07 * LIGHTS_PER_TUBE).contains(&index) { return TubeIndex::Seventeen; };
+    if (07 * LIGHTS_PER_TUBE..08 * LIGHTS_PER_TUBE).contains(&index) { return TubeIndex::Fifteen; };
+    if (08 * LIGHTS_PER_TUBE..09 * LIGHTS_PER_TUBE).contains(&index) { return TubeIndex::Thirteen; };
+    if (09 * LIGHTS_PER_TUBE..10 * LIGHTS_PER_TUBE).contains(&index) { return TubeIndex::Eleven; };
+    if (10 * LIGHTS_PER_TUBE..11 * LIGHTS_PER_TUBE).contains(&index) { return TubeIndex::Nine; };
+    if (11 * LIGHTS_PER_TUBE..12 * LIGHTS_PER_TUBE).contains(&index) { return TubeIndex::Seven; };
 
     error!("Index {} couldn't be mapped, returning default", index);
     TubeIndex::Six
+}
+
+/// Update the lights by averaging the color values of all LEDs linked to them
+pub fn drive_lights_system(
+    mut lights_query: Query<(&PhysicalLedTubeLed, &mut SpotLight)>,
+    led_query: Query<&LedTubeLed>,
+) {
+    for (phyiscal_led_tube, mut spotlight) in lights_query.iter_mut() {
+        // Average the colors by adding the square of each component up,
+        let color = phyiscal_led_tube.led_tube_leds.iter()
+            .map(|led_tube_led_entity| { led_query.get(*led_tube_led_entity).unwrap() })
+            .fold(Color::BLACK, |mut acc, led_tube_led| {
+                acc + square_color(led_tube_led.color)
+            });
+        spotlight.color = sqrt_color(color * (1./LIGHTS_PER_TUBE as f32));
+    }
+}
+
+fn square_color(color: Color) -> Color {
+    Color::rgb(
+        color.r().powf(2.),
+        color.g().powf(2.),
+        color.b().powf(2.),
+    )
+}
+
+fn sqrt_color(color: Color) -> Color {
+    Color::rgb(
+        color.r().sqrt(),
+        color.g().sqrt(),
+        color.b().sqrt(),
+    )
 }
