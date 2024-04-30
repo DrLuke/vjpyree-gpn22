@@ -91,16 +91,11 @@ fn spawn_debug_led_tubes(
     ));
     
     for (transform, led_tube) in query.iter() {
-
-        let mut translation = transform.translation.clone();
-        translation.x = translation.x - 1920. / 2.;
-        translation.y = translation.y - 1080. / 2.;
-
         commands.spawn((
             MaterialMesh2dBundle {
                 mesh: mesh.clone(),
                 material: materials.add(Color::rgba(1., 0., 0.1, 1.)),
-                transform: transform.clone().with_translation(translation),
+                transform: transform.clone(),
                 ..default()
             },
             PropagatingRenderLayers { render_layers: RenderLayers::layer(2) }

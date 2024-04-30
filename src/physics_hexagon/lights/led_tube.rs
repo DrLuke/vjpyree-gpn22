@@ -135,7 +135,7 @@ pub fn spawn_tube(
     tube_index: TubeIndex,
     mut commands: &mut Commands,
 ) {
-    let position = tube_index.get_position();
+    let position = tube_index.get_position() - Vec2::new(1920./2., 1080./2.);
     let angle = tube_index.get_rotation();
     let tube_entity = commands.spawn((
         LedTube {
