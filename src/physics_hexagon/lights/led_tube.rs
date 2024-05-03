@@ -150,7 +150,7 @@ pub fn spawn_tube(
     let step = TUBE_LENGTH / LEDS_COUNT as f32;
 
     for i in 0..LEDS_COUNT {
-        let offset = TUBE_LENGTH / 2. + step * i as f32 - TUBE_LENGTH;
+        let offset = TUBE_LENGTH / 2. + (step + 0.5) * i as f32 - TUBE_LENGTH;
         let led_tube_led_entity = commands.spawn((
             LedTubeLed { index: i, ..default() },
             SpatialBundle {
