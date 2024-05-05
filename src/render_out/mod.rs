@@ -2,6 +2,7 @@ use bevy::prelude::*;
 use bevy::render::camera::{ScalingMode};
 use bevy::render::view::RenderLayers;
 use bevy::sprite::{MaterialMesh2dBundle, Mesh2dHandle};
+use crate::elements2d::render::Elements2dRendertarget;
 use crate::hexagon::render::HexagonRenderTarget;
 use crate::physics_hexagon::render::PhysicsHexagonRenderTarget;
 
@@ -19,6 +20,7 @@ fn startup(
     mut materials: ResMut<Assets<ColorMaterial>>,
     physics_hexagon_rt: ResMut<PhysicsHexagonRenderTarget>,
     debug_hexagon_rt: ResMut<HexagonRenderTarget>,
+    elements2d_rendertarget: Res<Elements2dRendertarget>,
 ) {
     commands.spawn((
         Camera2dBundle {
@@ -37,6 +39,26 @@ fn startup(
     let material = materials.add(ColorMaterial {
         color: Default::default(),
         texture: Some(physics_hexagon_rt.render_target.clone()),
+    });
+
+    let mesh = Mesh2dHandle(meshes.add(
+        Rectangle::new(1., 1.)
+    ));
+
+    commands.spawn((
+        MaterialMesh2dBundle {
+            mesh,
+            material,
+            ..default()
+        },
+        RenderLayers::layer(31)
+    ));
+
+    // Elements 2d
+    // Debug Hexagons
+    let material = materials.add(ColorMaterial {
+        color: Default::default(),
+        texture: Some(elements2d_rendertarget.render_target.clone()),
     });
 
     let mesh = Mesh2dHandle(meshes.add(

@@ -4,12 +4,14 @@ mod render_out;
 mod propagating_render_layers;
 mod gui;
 mod output_window;
+pub mod elements2d;
 
 use bevy::core::Zeroable;
 use bevy::prelude::*;
 use bevy_egui::EguiPlugin;
 use bevy_inspector_egui::quick::WorldInspectorPlugin;
 use bevy_rapier3d::prelude::*;
+use crate::elements2d::Elements2DPlugin;
 use crate::gui::GuiPlugin;
 use crate::hexagon::HexagonPlugin;
 use crate::output_window::OutputWindowPlugin;
@@ -34,6 +36,7 @@ fn main() {
         .add_plugins(HexagonPlugin)
         .add_plugins(RenderOutPlugin)
         .add_plugins(PhysicsHexagonPlugin)
+        .add_plugins(Elements2DPlugin)
         .add_plugins(GuiPlugin)
         .add_systems(Startup, startup)
         .run();
