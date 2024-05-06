@@ -13,6 +13,7 @@ use bevy_defer::AsyncPlugin;
 use bevy_egui::EguiPlugin;
 use bevy_inspector_egui::quick::WorldInspectorPlugin;
 use bevy_rapier3d::prelude::*;
+use crate::anim::AnimPlugin;
 use crate::elements2d::Elements2DPlugin;
 use crate::gui::GuiPlugin;
 use crate::hexagon::HexagonPlugin;
@@ -41,6 +42,7 @@ fn main() {
         .add_plugins(PhysicsHexagonPlugin)
         .add_plugins(Elements2DPlugin)
         .add_plugins(GuiPlugin)
+        .add_plugins(AnimPlugin)
         .add_systems(Startup, startup)
         .run();
 }

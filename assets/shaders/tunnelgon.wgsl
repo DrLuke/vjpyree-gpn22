@@ -5,9 +5,12 @@
 
 @group(2) @binding(0) var prev: texture_2d<f32>;
 @group(2) @binding(1) var prev_sampler: sampler;
+@group(2) @binding(2) var<storage, read> params: TunnelgonParams;
+
 
 struct TunnelgonParams {
-    rings: array<f32, 8>,
+    rings_pos: array<f32, 8>,
+    rings_amp: array<f32, 8>,
     laser: array<f32, 8>,
     spiral_freq: f32,
     spiral_skew: f32,
@@ -45,5 +48,6 @@ fn fragment(mesh: VertexOutput) -> @location(0) vec4<f32> {
     var mask = smoothstep(0.75, 0.75, (uvt.y*12. + globals.time + uvt.x*3.) % 1.);
     let fog = 1.-smoothstep(0., 1.5, uvt.y);
 
-    return vec4<f32>(mask*fog, mask*fog*0.8745098039215686, mask*fog*0.1843137254901961, 1.)*0.9 + textureSample(prev, prev_sampler, mesh.position.xy/vec2<f32>(1920,1080) + samp.xy*0.001*rot2(length(uvc*10.)))*0.9;
+    return vec4<f32>(params.laser[0],params.laser[1],params.laser[2], 1);
+    //return vec4<f32>(mask*fog, mask*fog*0.8745098039215686, mask*fog*0.1843137254901961, 1.)*0.9 + textureSample(prev, prev_sampler, mesh.position.xy/vec2<f32>(1920,1080) + samp.xy*0.001*rot2(length(uvc*10.)))*0.9;
 }
