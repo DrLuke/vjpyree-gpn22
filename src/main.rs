@@ -5,9 +5,11 @@ mod propagating_render_layers;
 mod gui;
 mod output_window;
 pub mod elements2d;
+pub mod anim;
 
 use bevy::core::Zeroable;
 use bevy::prelude::*;
+use bevy_defer::AsyncPlugin;
 use bevy_egui::EguiPlugin;
 use bevy_inspector_egui::quick::WorldInspectorPlugin;
 use bevy_rapier3d::prelude::*;
@@ -23,6 +25,7 @@ fn main() {
     App::new()
         .add_plugins(DefaultPlugins)
         .add_plugins(EguiPlugin)
+        .add_plugins(AsyncPlugin::default_settings())
         .add_plugins(OutputWindowPlugin)
         .add_plugins(WorldInspectorPlugin::new())
         .insert_resource(RapierConfiguration {
