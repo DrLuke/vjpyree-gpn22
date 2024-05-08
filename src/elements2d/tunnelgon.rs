@@ -183,7 +183,7 @@ pub fn laser_animation_system(
                         .get(|mat_handle| mat_handle.clone()).await.unwrap();
 
                     // While the PT1 is still going, update the material
-                    while !pt1_component.get(|pt1anim| { pt1anim.target_reached() }).await.unwrap_or(true) {
+                    loop {
                         // Check if animation is meant to cancel
                         if let Some(cancel_indices) = signal.try_read() {
                             if cancel_indices.contains(&laser_index) {
@@ -198,6 +198,10 @@ pub fn laser_animation_system(
                             let mut mat = materials.get_mut(mat_handle_cloned).unwrap();
                             mat.params.laser[laser_index] = next_val
                         }).await.unwrap();
+
+                        if pt1_component.get(|pt1anim| { pt1anim.target_reached() }).await.unwrap_or(true) {
+                            break;
+                        }
                     }
 
                     world().entity(pt1_entity).despawn().await;

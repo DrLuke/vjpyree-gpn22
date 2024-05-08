@@ -3,6 +3,8 @@ pub mod render;
 pub mod tunnelgon;
 
 use bevy::app::App;
+use bevy::core_pipeline::core_2d::graph::Node2d::Tonemapping;
+use bevy::core_pipeline::tonemapping::Tonemapping::TonyMcMapface;
 use bevy::pbr::MaterialPlugin;
 use bevy::prelude::{Camera, Camera2dBundle, Color, Commands, default, OrthographicProjection, Plugin, Res, Startup, Update};
 use bevy::render::camera::{RenderTarget, ScalingMode};
@@ -45,8 +47,10 @@ fn setup_elements_2d(
                 order: -90,
                 target: RenderTarget::Image(rt.render_target.clone()),
                 clear_color: Color::rgba(0., 0., 0., 0.).into(),
+                hdr: true,
                 ..default()
             },
+            tonemapping: TonyMcMapface,
             ..default()
         },
         PropagatingRenderLayers { render_layers: RenderLayers::layer(3) }
