@@ -1,12 +1,16 @@
 use std::f32::consts::PI;
+use std::future::Future;
 use std::process::Command;
+use std::ptr::read;
 use bevy::asset::Assets;
 use bevy::math::Quat;
 use bevy::prelude::{Asset, Color, ColorMaterial, Commands, Component, default, DespawnRecursiveExt, Entity, Event, EventReader, Handle, Image, Mesh, Query, RegularPolygon, Res, ResMut, Transform, TypePath, With};
 use bevy::render::render_resource::{AsBindGroup, ShaderRef, ShaderType};
 use bevy::render::view::RenderLayers;
 use bevy::sprite::{Material2d, MaterialMesh2dBundle, Mesh2dHandle};
-use bevy_defer::{async_system, AsyncAccess, AsyncCommandsExtension, world};
+use bevy_defer::{async_system, AsyncAccess, AsyncCommandsExtension, signal_ids, world};
+use bevy_defer::reactors::Reactors;
+use bevy_defer::signals::{Receiver, Sender, Signal, Signals, SignalSender};
 use crate::anim::{ParameterAnimation, Pt1Anim};
 use crate::elements2d::render::Elements2dRendertarget;
 use crate::elements2d::zoomagon::Zoomagon;
@@ -71,6 +75,7 @@ pub fn spawn_tunnelgon_system(
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<TunnelgonMaterial>>,
     rt: Res<Elements2dRendertarget>,
+    mut reactors: ResMut<Reactors>
 ) {
     for event in event_reader.read() {
         for entity in query.iter() {
@@ -99,6 +104,8 @@ pub fn spawn_tunnelgon_system(
                     hexagon_definition: hexagon_definition.clone(),
                     params: TunnelgonParams::default(),
                 },
+                Signals::new()
+                    .with_sender::<CancelAnim>(reactors.get_named::<CancelAnim>("cancel_tunnelgon_laser_anim")),
                 PropagatingRenderLayers { render_layers: RenderLayers::layer(3) }
             ));
         }
@@ -133,12 +140,19 @@ pub struct LaserAnimationEvent {
     pub values: Vec<f32>,
 }
 
+signal_ids! {
+    pub CancelAnim: Vec<usize>
+}
+
 pub fn laser_animation_system(
     mut commands: Commands,
     query: Query<(Entity, &Tunnelgon)>,
-    mut event_reader: EventReader<LaserAnimationEvent>
+    mut event_reader: EventReader<LaserAnimationEvent>,
+    mut reactors: ResMut<Reactors>,
 ) {
     for ev in event_reader.read() {
+        let signal = reactors.get_named::<CancelAnim>("cancel_tunnelgon_laser_anim");
+        signal.send(ev.indices.clone());
         for (entity, tg) in query.iter() {
             if !ev.affected_hexagons.contains(&tg.hexagon_definition) {
                 continue;
@@ -149,6 +163,9 @@ pub fn laser_animation_system(
                 let entity_cloned = entity.clone();
 
                 commands.spawn_task(move || async move {
+                    let signal = world().named_signal::<CancelAnim>("cancel_tunnelgon_laser_anim");
+                    let _ = signal.poll().await;
+
                     let tunnelgon_entity = world().entity(entity_cloned);
                     let materials = world().resource::<Assets<TunnelgonMaterial>>();
 
@@ -167,6 +184,14 @@ pub fn laser_animation_system(
 
                     // While the PT1 is still going, update the material
                     while !pt1_component.get(|pt1anim| { pt1anim.target_reached() }).await.unwrap_or(true) {
+                        // Check if animation is meant to cancel
+                        if let Some(cancel_indices) = signal.try_read() {
+                            if cancel_indices.contains(&laser_index) {
+                                println!("Cancelling: {}", laser_index);
+                                break;
+                            }
+                        }
+
                         let next_val = pt1_component.get(|pt1anim| { pt1anim.get_val() }).await.unwrap_or(0.);
                         let mat_handle_cloned = mat_handle.clone();
                         let _ = materials.set(move |mut materials| {

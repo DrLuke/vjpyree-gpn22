@@ -8,8 +8,9 @@ use bevy::prelude::{Camera, Camera2dBundle, Color, Commands, default, Orthograph
 use bevy::render::camera::{RenderTarget, ScalingMode};
 use bevy::render::view::RenderLayers;
 use bevy::sprite::Material2dPlugin;
+use bevy_defer::AsyncExtension;
 use crate::elements2d::render::Elements2dRendertarget;
-use crate::elements2d::tunnelgon::{laser_animation_system, LaserAnimationEvent, SetTunnelgonEvent, spawn_tunnelgon_system, TunnelgonMaterial};
+use crate::elements2d::tunnelgon::{CancelAnim, laser_animation_system, LaserAnimationEvent, SetTunnelgonEvent, spawn_tunnelgon_system, TunnelgonMaterial};
 use crate::elements2d::zoomagon::{spawn_zoomagon_system, SpawnZoomagonEvent, zoomagon_system};
 use crate::propagating_render_layers::PropagatingRenderLayers;
 
