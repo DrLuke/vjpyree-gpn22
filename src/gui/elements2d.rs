@@ -48,7 +48,7 @@ pub fn elements_2d_gui(
                 }
             );
         };
-        if ui.button("Laser").clicked() {
+        if ui.button("Laser Pulse").clicked() {
             laser_animation_event_writer.send(
                 LaserAnimationEvent {
                     affected_hexagons: vec![
@@ -62,6 +62,40 @@ pub fn elements_2d_gui(
                     base_anim: TunnelgonBaseAnim::Pulse,
                     indices: vec![0, 1, 2, 3, 4, 5, 6, 7],
                     values: vec![1.; 8],
+                }
+            );
+        };
+        if ui.button("Laser Full").clicked() {
+            laser_animation_event_writer.send(
+                LaserAnimationEvent {
+                    affected_hexagons: vec![
+                        HexagonDefinition::A1,
+                        HexagonDefinition::A2,
+                        HexagonDefinition::A3,
+                        HexagonDefinition::B1,
+                        HexagonDefinition::B2,
+                        HexagonDefinition::B3,
+                    ],
+                    base_anim: TunnelgonBaseAnim::SetToVal,
+                    indices: vec![0, 1, 2, 3, 4, 5, 6, 7],
+                    values: vec![1.; 8],
+                }
+            );
+        };
+        if ui.button("Laser Off").clicked() {
+            laser_animation_event_writer.send(
+                LaserAnimationEvent {
+                    affected_hexagons: vec![
+                        HexagonDefinition::A1,
+                        HexagonDefinition::A2,
+                        HexagonDefinition::A3,
+                        HexagonDefinition::B1,
+                        HexagonDefinition::B2,
+                        HexagonDefinition::B3,
+                    ],
+                    base_anim: TunnelgonBaseAnim::SetToVal,
+                    indices: vec![0, 1, 2, 3, 4, 5, 6, 7],
+                    values: vec![0.; 8],
                 }
             );
         };

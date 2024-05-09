@@ -3,6 +3,7 @@ use std::future::Future;
 use std::process::Command;
 use std::ptr::read;
 use bevy::asset::Assets;
+use bevy::log::warn;
 use bevy::math::Quat;
 use bevy::prelude::{Asset, Color, ColorMaterial, Commands, Component, default, DespawnRecursiveExt, Entity, Event, EventReader, Handle, Image, Mesh, Query, RegularPolygon, Res, ResMut, Transform, TypePath, With};
 use bevy::render::render_resource::{AsBindGroup, ShaderRef, ShaderType};
@@ -146,66 +147,76 @@ signal_ids! {
 
 pub fn laser_animation_system(
     mut commands: Commands,
-    query: Query<(Entity, &Tunnelgon)>,
+    query: Query<(Entity, &Tunnelgon, &Handle<TunnelgonMaterial>)>,
     mut event_reader: EventReader<LaserAnimationEvent>,
     mut reactors: ResMut<Reactors>,
+    mut materials: ResMut<Assets<TunnelgonMaterial>>,
 ) {
     for ev in event_reader.read() {
         let signal = reactors.get_named::<CancelAnim>("cancel_tunnelgon_laser_anim");
         signal.send(ev.indices.clone());
-        for (entity, tg) in query.iter() {
+        for (entity, tg, tgm) in query.iter() {
             if !ev.affected_hexagons.contains(&tg.hexagon_definition) {
                 continue;
             }
+            let tgm_material = materials.get_mut(tgm).unwrap();
             for (i, li) in ev.indices.iter().enumerate() {
-                let laser_index = li.clone();
+                if li.clone() >= 8 { warn!("Got index out of range: {}", li) }
+                let laser_index = li.clone() % 8;
                 let laser_value = ev.values.get(i).unwrap_or(&0.).clone();
                 let entity_cloned = entity.clone();
 
-                commands.spawn_task(move || async move {
-                    let signal = world().named_signal::<CancelAnim>("cancel_tunnelgon_laser_anim");
-                    let _ = signal.poll().await;
-
-                    let tunnelgon_entity = world().entity(entity_cloned);
-                    let materials = world().resource::<Assets<TunnelgonMaterial>>();
-
-                    // Spawn PT1 anim
-                    let pt1_entity = world().spawn_bundle(
-                        Pt1Anim {
-                            val: laser_value.clone(),
-                            target: 0.,
-                            ..default()
-                        }
-                    ).await.id();
-                    let pt1_component = world().entity(pt1_entity).component::<Pt1Anim>();
-
-                    let mat_handle = tunnelgon_entity.component::<Handle<TunnelgonMaterial>>()
-                        .get(|mat_handle| mat_handle.clone()).await.unwrap();
-
-                    // While the PT1 is still going, update the material
-                    loop {
-                        // Check if animation is meant to cancel
-                        if let Some(cancel_indices) = signal.try_read() {
-                            if cancel_indices.contains(&laser_index) {
-                                break;
-                            }
-                        }
-
-                        let (next_val, finished) = pt1_component.get(|pt1anim| { (pt1anim.get_val(), pt1anim.target_reached()) }).await.unwrap_or((0., true));
-                        let mat_handle_cloned = mat_handle.clone();
-                        let _ = materials.set(move |mut materials| {
-                            let mut mat = materials.get_mut(mat_handle_cloned).unwrap();
-                            mat.params.laser[laser_index] = next_val
-                        }).await.unwrap();
-                        if finished {
-                            break;
-                        }
+                match ev.base_anim {
+                    TunnelgonBaseAnim::SetToVal => {
+                        tgm_material.params.laser[laser_index] = laser_value;
                     }
+                    TunnelgonBaseAnim::Pulse => {
+                        commands.spawn_task(move || async move {
+                            let signal = world().named_signal::<CancelAnim>("cancel_tunnelgon_laser_anim");
+                            let _ = signal.poll().await;
 
-                    world().entity(pt1_entity).despawn().await;
+                            let tunnelgon_entity = world().entity(entity_cloned);
+                            let materials = world().resource::<Assets<TunnelgonMaterial>>();
 
-                    Ok(())
-                });
+                            // Spawn PT1 anim
+                            let pt1_entity = world().spawn_bundle(
+                                Pt1Anim {
+                                    val: laser_value.clone(),
+                                    target: 0.,
+                                    ..default()
+                                }
+                            ).await.id();
+                            let pt1_component = world().entity(pt1_entity).component::<Pt1Anim>();
+
+                            let mat_handle = tunnelgon_entity.component::<Handle<TunnelgonMaterial>>()
+                                .get(|mat_handle| mat_handle.clone()).await.unwrap();
+
+                            // While the PT1 is still going, update the material
+                            loop {
+                                // Check if animation is meant to cancel
+                                if let Some(cancel_indices) = signal.try_read() {
+                                    if cancel_indices.contains(&laser_index) {
+                                        break;
+                                    }
+                                }
+
+                                let (next_val, finished) = pt1_component.get(|pt1anim| { (pt1anim.get_val(), pt1anim.target_reached()) }).await.unwrap_or((0., true));
+                                let mat_handle_cloned = mat_handle.clone();
+                                let _ = materials.set(move |mut materials| {
+                                    let mut mat = materials.get_mut(mat_handle_cloned).unwrap();
+                                    mat.params.laser[laser_index] = next_val
+                                }).await.unwrap();
+                                if finished {
+                                    break;
+                                }
+                            }
+
+                            world().entity(pt1_entity).despawn().await;
+
+                            Ok(())
+                        });
+                    }
+                }
             }
         }
     }
