@@ -305,7 +305,6 @@ pub fn ring_animation_system(
                                 let mat_handle_cloned = mat_handle.clone();
                                 let _ = materials.set(move |mut materials| {
                                     let mut mat = materials.get_mut(mat_handle_cloned).unwrap();
-                                    println!("Setting {} to val: {}", ring_index, next_val);
                                     mat.params.rings_pos[ring_index] = next_val
                                 }).await.unwrap();
                                 if finished {
