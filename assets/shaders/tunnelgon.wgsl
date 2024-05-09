@@ -34,6 +34,9 @@ fn tunnel(uv: vec2<f32>, size: f32) -> vec2<f32>
 fn laser(uvt: vec2<f32>, index: f32, intensity: f32) -> f32 {
     return ((1.-smoothstep(0.005, 0.02, abs((uvt.x - (index+3.5)/3. - 0.5)%2. + 0.5))))*intensity;
 }
+fn ring(uvt: vec2<f32>, pos: f32, intensity: f32) -> f32 {
+    return (1-smoothstep(0.005, 0.01, abs(uvt.y-(pos*1.5 + 0.1))))*intensity;
+}
 
 fn rot2(a: f32) -> mat2x2<f32> {
     return mat2x2<f32>(cos(a), -sin(a), sin(a), cos(a));
@@ -75,14 +78,23 @@ fn fragment(mesh: VertexOutput) -> @location(0) vec4<f32> {
 
     var mask = 1.-smoothstep(0.15, 0.25, abs((uvt.y*12. + globals.time + uvt.x*-3.) % 1. - 0.5));
     let fog = 1.-smoothstep(0., 1.5, uvt.y);
+    let fog_laser = 1.-smoothstep(0.5, 2., uvt.y);
 
     // Laser
     let lasermask = laser(uvt, 0., params.laser[0]) + laser(uvt, 1., params.laser[1])
     + laser(uvt, 2., params.laser[2]) + laser(uvt, 3., params.laser[3])
     + laser(uvt, 4., params.laser[4]) + laser(uvt, 5., params.laser[5]);
 
+    let ringmask = ring(uvt, params.rings_pos[0], params.rings_amp[0]) +
+    ring(uvt, params.rings_pos[1], params.rings_amp[1]) +
+    ring(uvt, params.rings_pos[2], params.rings_amp[2]) +
+    ring(uvt, params.rings_pos[3], params.rings_amp[3]);
 
-    return vec4<f32>(abs(palette4(uvt.y+globals.time*0.2)*mask*fog + palette6(uvt.y)*lasermask*fog), 1) + textureSample(prev, prev_sampler, mesh.position.xy/vec2<f32>(1920,1080)).rgba*0.45;
-    //return vec4<f32>(lasermask*fog,mask*fog,mask*fog, 1);
+    var off_samp = textureSample(prev, prev_sampler, mesh.position.xy/vec2<f32>(1920,1080) + samp.xy*0.001*rot2(length(uvc*10.)));
+
+    var out = vec4<f32>(abs(palette4(uvt.y+globals.time*0.2)*(mask-lasermask)*fog*2. + palette6(uvt.y*0.5-globals.time*4.)*lasermask*fog_laser*150. + palette1(uvt.y*0.5)*ringmask*fog*150.), 1);
+    //out = mix(out + off_samp * 0.8, out, 1.-smoothstep(0.1, 0.2, length(out.rgb)));
+    return out;
+    //return vec4<f32>(params.rings_pos[0], params.rings_amp[0]*0, 0, 1);
     //return vec4<f32>(lasermask, mask*fog*0.8745098039215686, mask*fog*0.1843137254901961, 1.)*0.9 ;
 }
