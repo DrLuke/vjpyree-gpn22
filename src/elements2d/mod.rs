@@ -3,6 +3,7 @@ pub mod render;
 pub mod tunnelgon;
 
 use bevy::app::App;
+use bevy::core_pipeline::bloom::BloomSettings;
 use bevy::core_pipeline::core_2d::graph::Node2d::Tonemapping;
 use bevy::core_pipeline::tonemapping::Tonemapping::TonyMcMapface;
 use bevy::pbr::MaterialPlugin;
@@ -53,6 +54,7 @@ fn setup_elements_2d(
             tonemapping: TonyMcMapface,
             ..default()
         },
+        BloomSettings::NATURAL,
         PropagatingRenderLayers { render_layers: RenderLayers::layer(3) }
     ));
 }
