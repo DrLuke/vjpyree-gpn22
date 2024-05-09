@@ -187,19 +187,17 @@ pub fn laser_animation_system(
                         // Check if animation is meant to cancel
                         if let Some(cancel_indices) = signal.try_read() {
                             if cancel_indices.contains(&laser_index) {
-                                println!("Cancelling: {}", laser_index);
                                 break;
                             }
                         }
 
-                        let next_val = pt1_component.get(|pt1anim| { pt1anim.get_val() }).await.unwrap_or(0.);
+                        let (next_val, finished) = pt1_component.get(|pt1anim| { (pt1anim.get_val(), pt1anim.target_reached()) }).await.unwrap_or((0., true));
                         let mat_handle_cloned = mat_handle.clone();
                         let _ = materials.set(move |mut materials| {
                             let mut mat = materials.get_mut(mat_handle_cloned).unwrap();
                             mat.params.laser[laser_index] = next_val
                         }).await.unwrap();
-
-                        if pt1_component.get(|pt1anim| { pt1anim.target_reached() }).await.unwrap_or(true) {
+                        if finished {
                             break;
                         }
                     }
