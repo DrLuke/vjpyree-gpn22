@@ -12,7 +12,7 @@ use bevy::sprite::{Material2d, MaterialMesh2dBundle, Mesh2dHandle};
 use bevy_defer::{async_system, AsyncAccess, AsyncCommandsExtension, signal_ids, world};
 use bevy_defer::reactors::Reactors;
 use bevy_defer::signals::{Receiver, Sender, Signal, Signals, SignalSender};
-use crate::anim::{ParameterAnimation, Pt1Anim};
+use crate::anim::{LinearAnim, ParameterAnimation, Pt1Anim};
 use crate::elements2d::render::Elements2dRendertarget;
 use crate::elements2d::zoomagon::Zoomagon;
 use crate::hexagon::HexagonDefinition;
@@ -76,7 +76,7 @@ pub fn spawn_tunnelgon_system(
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<TunnelgonMaterial>>,
     rt: Res<Elements2dRendertarget>,
-    mut reactors: ResMut<Reactors>
+    mut reactors: ResMut<Reactors>,
 ) {
     for event in event_reader.read() {
         for entity in query.iter() {
@@ -130,7 +130,7 @@ pub fn spawn_tunnelgon_system(
 #[derive(Clone)]
 pub enum TunnelgonBaseAnim {
     Pulse,
-    SetToVal
+    SetToVal,
 }
 
 #[derive(Event, Clone)]
@@ -212,6 +212,158 @@ pub fn laser_animation_system(
                             }
 
                             world().entity(pt1_entity).despawn().await;
+
+                            Ok(())
+                        });
+                    }
+                }
+            }
+        }
+    }
+}
+
+// RINGS
+#[derive(Clone)]
+pub enum RingBasePosAnim {
+    SetToPosition,
+    SlideLinear,
+}
+
+#[derive(Clone)]
+pub enum RingBaseValAnim {
+    SetToVal,
+    Pulse,
+}
+
+#[derive(Event, Clone)]
+pub struct RingAnimationEvent {
+    pub affected_hexagons: Vec<HexagonDefinition>,
+    pub base_pos_anim: RingBasePosAnim,
+    pub base_val_anim: RingBaseValAnim,
+    pub indices: Vec<usize>,
+    pub positions_from: Vec<f32>,
+    pub positions_to: Vec<f32>,
+    pub values: Vec<f32>,
+}
+
+pub fn ring_animation_system(
+    mut commands: Commands,
+    query: Query<(Entity, &Tunnelgon, &Handle<TunnelgonMaterial>)>,
+    mut event_reader: EventReader<RingAnimationEvent>,
+    mut reactors: ResMut<Reactors>,
+    mut materials: ResMut<Assets<TunnelgonMaterial>>,
+) {
+    for ev in event_reader.read() {
+        let signal = reactors.get_named::<CancelAnim>("cancel_tunnelgon_ring_anim");
+        signal.send(ev.indices.clone());
+        for (entity, tg, tgm) in query.iter() {
+            if !ev.affected_hexagons.contains(&tg.hexagon_definition) {
+                continue;
+            }
+            let tgm_material = materials.get_mut(tgm).unwrap();
+            for (i, li) in ev.indices.iter().enumerate() {
+                if li.clone() >= 8 { warn!("Got index out of range: {}", li) }
+                let ring_index = li.clone() % 8;
+                let ring_value = ev.values.get(i).unwrap_or(&0.).clone();
+                let ring_pos_from = ev.positions_from.get(i).unwrap_or(&0.).clone();
+                let ring_pos_to = ev.positions_to.get(i).unwrap_or(&0.).clone();
+                let entity_cloned = entity.clone();
+
+                match ev.base_pos_anim {
+                    RingBasePosAnim::SetToPosition => { tgm_material.params.rings_pos[ring_index] = ring_pos_to; }
+                    RingBasePosAnim::SlideLinear => {
+                        commands.spawn_task(move || async move {
+                            let signal = world().named_signal::<CancelAnim>("cancel_tunnelgon_ring_anim");
+                            let _ = signal.poll().await;
+
+                            let tunnelgon_entity = world().entity(entity_cloned);
+                            let materials = world().resource::<Assets<TunnelgonMaterial>>();
+
+                            // Spawn Linear anim
+                            let anim_entity = world().spawn_bundle(
+                                LinearAnim {
+                                    val: ring_pos_from,
+                                    target: ring_pos_to,
+                                    speed: 1.
+                                }
+                            ).await.id();
+                            let anim_component = world().entity(anim_entity).component::<LinearAnim>();
+
+                            let mat_handle = tunnelgon_entity.component::<Handle<TunnelgonMaterial>>()
+                                .get(|mat_handle| mat_handle.clone()).await.unwrap();
+
+                            // While the Anim is still going, update the material
+                            loop {
+                                // Check if animation is meant to cancel
+                                if let Some(cancel_indices) = signal.try_read() {
+                                    if cancel_indices.contains(&ring_index) {
+                                        break;
+                                    }
+                                }
+
+                                let (next_val, finished) = anim_component.get(|linear_anim| { (linear_anim.get_val(), linear_anim.target_reached()) }).await.unwrap_or((0., true));
+                                let mat_handle_cloned = mat_handle.clone();
+                                let _ = materials.set(move |mut materials| {
+                                    let mut mat = materials.get_mut(mat_handle_cloned).unwrap();
+                                    println!("Setting {} to val: {}", ring_index, next_val);
+                                    mat.params.rings_pos[ring_index] = next_val
+                                }).await.unwrap();
+                                if finished {
+                                    break;
+                                }
+                            }
+
+                            world().entity(anim_entity).despawn().await;
+
+                            Ok(())
+                        });
+                    }
+                }
+
+                match ev.base_val_anim {
+                    RingBaseValAnim::SetToVal => { tgm_material.params.rings_amp[ring_index] = ring_value; }
+                    RingBaseValAnim::Pulse => {
+                        commands.spawn_task(move || async move {
+                            let signal = world().named_signal::<CancelAnim>("cancel_tunnelgon_ring_anim");
+                            let _ = signal.poll().await;
+
+                            let tunnelgon_entity = world().entity(entity_cloned);
+                            let materials = world().resource::<Assets<TunnelgonMaterial>>();
+
+                            // Spawn Linear anim
+                            let anim_entity = world().spawn_bundle(
+                                Pt1Anim {
+                                    val: ring_value,
+                                    target: 0.,
+                                    ..default()
+                                }
+                            ).await.id();
+                            let anim_component = world().entity(anim_entity).component::<Pt1Anim>();
+
+                            let mat_handle = tunnelgon_entity.component::<Handle<TunnelgonMaterial>>()
+                                .get(|mat_handle| mat_handle.clone()).await.unwrap();
+
+                            // While the Anim is still going, update the material
+                            loop {
+                                // Check if animation is meant to cancel
+                                if let Some(cancel_indices) = signal.try_read() {
+                                    if cancel_indices.contains(&ring_index) {
+                                        break;
+                                    }
+                                }
+
+                                let (next_val, finished) = anim_component.get(|pt1anim| { (pt1anim.get_val(), pt1anim.target_reached()) }).await.unwrap_or((0., true));
+                                let mat_handle_cloned = mat_handle.clone();
+                                let _ = materials.set(move |mut materials| {
+                                    let mut mat = materials.get_mut(mat_handle_cloned).unwrap();
+                                    mat.params.rings_amp[ring_index] = next_val
+                                }).await.unwrap();
+                                if finished {
+                                    break;
+                                }
+                            }
+
+                            world().entity(anim_entity).despawn().await;
 
                             Ok(())
                         });

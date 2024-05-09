@@ -13,7 +13,7 @@ use bevy::render::view::RenderLayers;
 use bevy::sprite::Material2dPlugin;
 use bevy_defer::AsyncExtension;
 use crate::elements2d::render::Elements2dRendertarget;
-use crate::elements2d::tunnelgon::{CancelAnim, laser_animation_system, LaserAnimationEvent, SetTunnelgonEvent, spawn_tunnelgon_system, TunnelgonMaterial};
+use crate::elements2d::tunnelgon::{CancelAnim, laser_animation_system, LaserAnimationEvent, ring_animation_system, RingAnimationEvent, SetTunnelgonEvent, spawn_tunnelgon_system, TunnelgonMaterial};
 use crate::elements2d::zoomagon::{spawn_zoomagon_system, SpawnZoomagonEvent, zoomagon_system};
 use crate::propagating_render_layers::PropagatingRenderLayers;
 
@@ -27,8 +27,9 @@ impl Plugin for Elements2DPlugin {
         app.add_systems(Update, (spawn_zoomagon_system, zoomagon_system));
         app.add_event::<SetTunnelgonEvent>();
         app.add_event::<LaserAnimationEvent>();
+        app.add_event::<RingAnimationEvent>();
         app.add_plugins(Material2dPlugin::<TunnelgonMaterial>::default());
-        app.add_systems(Update, (spawn_tunnelgon_system, laser_animation_system));
+        app.add_systems(Update, (spawn_tunnelgon_system, laser_animation_system, ring_animation_system));
     }
 }
 
