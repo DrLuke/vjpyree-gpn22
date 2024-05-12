@@ -6,6 +6,9 @@ mod gui;
 mod output_window;
 pub mod elements2d;
 pub mod anim;
+pub mod traktor_beat;
+pub mod beat;
+mod beat_controls;
 
 use bevy::core::Zeroable;
 use bevy::prelude::*;
@@ -13,7 +16,10 @@ use bevy_defer::AsyncPlugin;
 use bevy_egui::EguiPlugin;
 use bevy_inspector_egui::quick::WorldInspectorPlugin;
 use bevy_rapier3d::prelude::*;
+use bevy_rosc::BevyRoscPlugin;
 use crate::anim::AnimPlugin;
+use crate::beat::OscBeatReceiverPlugin;
+use crate::beat_controls::BeatControls;
 use crate::elements2d::Elements2DPlugin;
 use crate::gui::GuiPlugin;
 use crate::hexagon::HexagonPlugin;
@@ -21,6 +27,7 @@ use crate::output_window::OutputWindowPlugin;
 use crate::physics_hexagon::PhysicsHexagonPlugin;
 use crate::propagating_render_layers::{PropagatingRenderLayersPlugin};
 use crate::render_out::RenderOutPlugin;
+use crate::traktor_beat::TraktorPlugin;
 
 fn main() {
     App::new()
@@ -32,9 +39,9 @@ fn main() {
         .insert_resource(RapierConfiguration {
             gravity: Vec3::Z * -9.81 * 100.,
 
-            ..default()
+            ..RapierConfiguration::new(10.)
         })
-        .add_plugins(RapierPhysicsPlugin::<NoUserData>::default().with_physics_scale(10.))
+        .add_plugins(RapierPhysicsPlugin::<NoUserData>::default())
         .add_plugins(RapierDebugRenderPlugin::default())
         .add_plugins(PropagatingRenderLayersPlugin)
         .add_plugins(HexagonPlugin)
@@ -43,6 +50,12 @@ fn main() {
         .add_plugins(Elements2DPlugin)
         .add_plugins(GuiPlugin)
         .add_plugins(AnimPlugin)
+        .add_plugins((
+            BevyRoscPlugin::new("0.0.0.0:31337").unwrap(),
+            BeatControls,
+            TraktorPlugin,
+            OscBeatReceiverPlugin::default(),
+        ))
         .add_systems(Startup, startup)
         .run();
 }
