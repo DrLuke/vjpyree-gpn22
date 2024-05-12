@@ -1,7 +1,7 @@
 use std::collections::VecDeque;
 use bevy::prelude::*;
 use bevy_egui::{egui, EguiContexts};
-use egui_plot::{Line, Plot, PlotPoints, VLine};
+use egui_plot::{Line, Plot, PlotBounds, PlotPoints, VLine};
 use crate::beat::BeatEvent;
 use crate::beat::bpm_guesser::BpmGuesser;
 use crate::elements2d::tunnelgon::{LaserAnimationEvent, TunnelgonBaseAnim};
@@ -21,8 +21,16 @@ impl Plugin for BeatControls {
 }
 
 #[derive(Resource, Default)]
-pub struct BeatMute{
-    pub mute: bool
+pub struct BeatMute {
+    pub mute: bool,
+}
+
+struct BpmPlotBounds(pub f32, pub f32);
+
+impl Default for BpmPlotBounds {
+    fn default() -> Self {
+        Self(140., 300.)
+    }
 }
 
 pub fn beat_ui(
@@ -32,7 +40,8 @@ pub fn beat_ui(
     keys: Res<ButtonInput<KeyCode>>,
     mut beat_mute: ResMut<BeatMute>,
     bpm_guesser: Res<BpmGuesser>,
-    mut bpm_data: Local<VecDeque<f32>>
+    mut bpm_data: Local<VecDeque<f32>>,
+    mut plot_bounds: Local<BpmPlotBounds>
 ) {
     // Gather BPM data
     if bpm_data.len() >= 300 { bpm_data.pop_front(); }
@@ -45,20 +54,30 @@ pub fn beat_ui(
                 ui.label("BEAT");
             }
         });
+        ui.horizontal(|ui| {
+            ui.label("BPM: ");
+            ui.label(format!("{}", bpm_data.back().unwrap_or(&0.)));
+        });
+        ui.horizontal(|ui| {
+            ui.label("Mid:");
+            ui.add(egui::DragValue::new(&mut plot_bounds.0).speed(1.0));
+            ui.label("Width:");
+            ui.add(egui::DragValue::new(&mut plot_bounds.1).speed(1.0));
+        });
 
         let values: Vec<f64> = bpm_data.iter().map(|a| a.clone() as f64).collect();
         let line_points: PlotPoints = (0..bpm_data.len())
             .map(|i| {
-                let x = egui::remap(i as f64, 0f64..=bpm_data.len() as f64, (-(bpm_data.len() as f64)+1.)..=0.);
+                let x = egui::remap(i as f64, 0f64..=bpm_data.len() as f64, (-(bpm_data.len() as f64) + 1.)..=0.);
                 [x, *values.get(i).unwrap_or(&0f64)]
             })
             .collect();
         let line = Line::new(line_points);
-        Plot::new("example_plot")
+        Plot::new("BPM")
             .height(64.0)
             .show_axes(false)
-            .data_aspect(1.0)
             .show(ui, |plot_ui| {
+                plot_ui.set_plot_bounds(PlotBounds::from_min_max([-(bpm_data.len() as f64) + 1., (plot_bounds.0 - plot_bounds.1/2.) as f64], [0., (plot_bounds.0 + plot_bounds.1/2.) as f64]));
                 plot_ui.line(line);
             })
             .response;
@@ -85,7 +104,5 @@ pub fn beat_ui(
         if keys.just_released(KeyCode::Space) {
             beat_mute.mute = false;
         }
-
-
     });
 }
