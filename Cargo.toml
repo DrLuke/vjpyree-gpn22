@@ -10,6 +10,7 @@ bevy = { version = "0.13.1", features = ["jpeg", "file_watcher"] }
 bevy_rapier3d = "*"
 bevy-inspector-egui = "*"
 bevy_egui = "*"
+egui_plot = "*"
 strum_macros = "0.26.2"
 strum = { version = "0.26.2" , features = ["strum_macros"]}
 bevy_defer = "0.10.0"

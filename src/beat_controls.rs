@@ -1,6 +1,11 @@
+use std::collections::VecDeque;
 use bevy::prelude::*;
 use bevy_egui::{egui, EguiContexts};
+use egui_plot::{Line, Plot, PlotPoints, VLine};
 use crate::beat::BeatEvent;
+use crate::beat::bpm_guesser::BpmGuesser;
+use crate::elements2d::tunnelgon::{LaserAnimationEvent, TunnelgonBaseAnim};
+use crate::hexagon::HexagonDefinition;
 use crate::traktor_beat::TraktorBeat;
 
 
@@ -26,7 +31,13 @@ pub fn beat_ui(
     mut traktor_beat: ResMut<TraktorBeat>,
     keys: Res<ButtonInput<KeyCode>>,
     mut beat_mute: ResMut<BeatMute>,
+    bpm_guesser: Res<BpmGuesser>,
+    mut bpm_data: Local<VecDeque<f32>>
 ) {
+    // Gather BPM data
+    if bpm_data.len() >= 300 { bpm_data.pop_front(); }
+    bpm_data.push_back(bpm_guesser.calculate_bpm());
+
     egui::Window::new("Beat").show(contexts.ctx_mut(), |ui| {
         ui.horizontal(|ui| {
             ui.label("Beat: ");
@@ -34,6 +45,26 @@ pub fn beat_ui(
                 ui.label("BEAT");
             }
         });
+
+        let values: Vec<f64> = bpm_data.iter().map(|a| a.clone() as f64).collect();
+        let line_points: PlotPoints = (0..bpm_data.len())
+            .map(|i| {
+                let x = egui::remap(i as f64, 0f64..=bpm_data.len() as f64, (-(bpm_data.len() as f64)+1.)..=0.);
+                [x, *values.get(i).unwrap_or(&0f64)]
+            })
+            .collect();
+        let line = Line::new(line_points);
+        Plot::new("example_plot")
+            .height(64.0)
+            .show_axes(false)
+            .data_aspect(1.0)
+            .show(ui, |plot_ui| {
+                plot_ui.line(line);
+            })
+            .response;
+
+        ui.separator();
+
         ui.label(format!("{}", traktor_beat.count));
         ui.add(egui::ProgressBar::new((traktor_beat.count as f32 / 24.))
             .show_percentage());

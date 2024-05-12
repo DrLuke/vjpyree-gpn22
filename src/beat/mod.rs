@@ -4,6 +4,7 @@ use bevy::prelude::*;
 
 mod osc_receiver;
 mod plugin;
+pub mod bpm_guesser;
 
 pub use osc_receiver::{OscBeatReceiver, osc_beat_receiver_system};
 pub use plugin::OscBeatReceiverPlugin;
