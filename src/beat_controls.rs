@@ -1,11 +1,9 @@
 use std::collections::VecDeque;
 use bevy::prelude::*;
 use bevy_egui::{egui, EguiContexts};
-use egui_plot::{Line, Plot, PlotBounds, PlotPoints, VLine};
+use egui_plot::{Line, Plot, PlotBounds, PlotPoints};
 use crate::beat::BeatEvent;
 use crate::beat::bpm_guesser::BpmGuesser;
-use crate::elements2d::tunnelgon::{LaserAnimationEvent, TunnelgonBaseAnim};
-use crate::hexagon::HexagonDefinition;
 use crate::traktor_beat::TraktorBeat;
 
 
