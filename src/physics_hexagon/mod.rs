@@ -31,7 +31,7 @@ impl Plugin for PhysicsHexagonPlugin {
             spawn_physical_leds.after(spawn_led_tubes)
         ));
         app.add_systems(Update, hexagon_physics_element_cleanup_system);
-        app.add_systems(Update, (drive_lights_system, wave_animation_system));
+        app.add_systems(Update, (drive_lights_system));
         app.register_type::<PhysicalTubeIndex>();
         app.register_type::<PhysicalLedTube>();
         app.register_type::<PhysicalLedTubeLed>();

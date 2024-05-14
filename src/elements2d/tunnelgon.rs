@@ -12,7 +12,7 @@ use bevy::sprite::{Material2d, MaterialMesh2dBundle, Mesh2dHandle};
 use bevy_defer::{async_system, AsyncAccess, AsyncCommandsExtension, signal_ids, world};
 use bevy_defer::reactors::Reactors;
 use bevy_defer::signals::{Receiver, Sender, Signal, Signals, SignalSender};
-use crate::anim::{LinearAnim, ParameterAnimation, Pt1Anim};
+use crate::parameter_animation::{LinearAnim, ParameterAnimation, Pt1Anim};
 use crate::elements2d::render::Elements2dRendertarget;
 use crate::elements2d::zoomagon::Zoomagon;
 use crate::hexagon::HexagonDefinition;
@@ -183,7 +183,7 @@ pub fn laser_animation_system(
                                 Pt1Anim {
                                     val: laser_value.clone(),
                                     target: 0.,
-                                    ..default()
+                                    time_constant: 0.03,
                                 }
                             ).await.id();
                             let pt1_component = world().entity(pt1_entity).component::<Pt1Anim>();

@@ -1,3 +1,5 @@
+#![feature(future_join)]
+
 mod hexagon;
 mod physics_hexagon;
 mod render_out;
@@ -5,10 +7,11 @@ mod propagating_render_layers;
 mod gui;
 mod output_window;
 pub mod elements2d;
-pub mod anim;
+pub mod parameter_animation;
 pub mod traktor_beat;
 pub mod beat;
-mod beat_controls;
+pub mod beat_controls;
+pub mod anims;
 
 use bevy::core::Zeroable;
 use bevy::prelude::*;
@@ -17,7 +20,8 @@ use bevy_egui::EguiPlugin;
 use bevy_inspector_egui::quick::WorldInspectorPlugin;
 use bevy_rapier3d::prelude::*;
 use bevy_rosc::BevyRoscPlugin;
-use crate::anim::AnimPlugin;
+use crate::anims::AnimPlugin;
+use crate::parameter_animation::ParameterAnimationPlugin;
 use crate::beat::OscBeatReceiverPlugin;
 use crate::beat_controls::BeatControls;
 use crate::elements2d::Elements2DPlugin;
@@ -49,7 +53,7 @@ fn main() {
         .add_plugins(PhysicsHexagonPlugin)
         .add_plugins(Elements2DPlugin)
         .add_plugins(GuiPlugin)
-        .add_plugins(AnimPlugin)
+        .add_plugins(ParameterAnimationPlugin)
         .add_plugins((
             BevyRoscPlugin::new("0.0.0.0:31337").unwrap(),
             BeatControls,
@@ -57,6 +61,7 @@ fn main() {
             OscBeatReceiverPlugin::default(),
         ))
         .add_systems(Startup, startup)
+        .add_plugins(AnimPlugin)
         .run();
 }
 

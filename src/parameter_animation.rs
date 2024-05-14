@@ -3,9 +3,9 @@ use bevy::prelude::{Component, Plugin, Query, Res, Update};
 use bevy::time::Time;
 
 
-pub struct AnimPlugin;
+pub struct ParameterAnimationPlugin;
 
-impl Plugin for AnimPlugin {
+impl Plugin for ParameterAnimationPlugin {
     fn build(&self, app: &mut App) {
         app.add_systems(Update, (linear_anim_system, pt1_anim_system));
     }
