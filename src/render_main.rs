@@ -6,9 +6,9 @@ use crate::elements2d::render::Elements2dRendertarget;
 use crate::hexagon::render::HexagonRenderTarget;
 use crate::physics_hexagon::render::PhysicsHexagonRenderTarget;
 
-pub struct RenderOutPlugin;
+pub struct RenderMainPlugin;
 
-impl Plugin for RenderOutPlugin {
+impl Plugin for RenderMainPlugin {
     fn build(&self, app: &mut App) {
         app.add_systems(Startup, startup);
     }
@@ -27,9 +27,10 @@ fn startup(
             projection: OrthographicProjection {
                 far: 1000.,
                 near: -1000.,
-                scaling_mode: ScalingMode::Fixed { width: 1., height: 1. },
+                scaling_mode: ScalingMode::Fixed { width: 1.5, height: 1.5 },
                 ..Default::default()
             },
+            transform: Transform::from_xyz(0., -0.3, 0.),
             ..Camera2dBundle::default()
         },
         RenderLayers::layer(31)
