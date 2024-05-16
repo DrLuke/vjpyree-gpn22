@@ -16,12 +16,12 @@ impl HexagonDefinition {
     pub fn center(&self) -> Vec2 {
         match self {
             HexagonDefinition::Main => Vec2::new(960.0, 540.0),
-            HexagonDefinition::A1 => Vec2::new(479.0, 373.0),
+            HexagonDefinition::A3 => Vec2::new(479.0, 373.0),
             HexagonDefinition::A2 => Vec2::new(194.0, 540.0),
-            HexagonDefinition::A3 => Vec2::new(479.0, 706.0),
-            HexagonDefinition::B1 => Vec2::new(1440.0, 373.0),
+            HexagonDefinition::A1 => Vec2::new(479.0, 706.0),
+            HexagonDefinition::B3 => Vec2::new(1440.0, 373.0),
             HexagonDefinition::B2 => Vec2::new(1725.0, 540.0),
-            HexagonDefinition::B3 => Vec2::new(1440.0, 706.0),
+            HexagonDefinition::B1 => Vec2::new(1440.0, 706.0),
         }
     }
 
