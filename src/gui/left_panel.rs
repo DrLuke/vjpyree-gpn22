@@ -1,7 +1,8 @@
 use std::collections::VecDeque;
+use bevy::ecs::event::ManualEventReader;
 use bevy::ecs::system::SystemParam;
 use bevy::input::ButtonInput;
-use bevy::prelude::{Camera, Camera2dBundle, Color, Commands, default, EventReader, KeyCode, Local, OrthographicProjection, Query, Res, ResMut, Resource, Window};
+use bevy::prelude::{Camera, Camera2dBundle, Color, Commands, default, EventReader, Events, EventWriter, KeyCode, Local, OrthographicProjection, Query, Res, ResMut, Resource, Window};
 use bevy::render::camera::{RenderTarget, ScalingMode};
 use bevy::render::view::RenderLayers;
 use bevy::window::{PresentMode, WindowRef, WindowResolution};
@@ -28,7 +29,8 @@ impl Default for BpmPlotBounds {
 
 #[derive(SystemParam)]
 pub struct BeatControlsParams<'w, 's> {
-    beat_reader: EventReader<'w, 's, BeatEvent>,
+    beat_reader: Local<'s, ManualEventReader<BeatEvent>>,
+    beat_events: ResMut<'w, Events<BeatEvent>>,
     traktor_beat: ResMut<'w, TraktorBeat>,
     keys: Res<'w, ButtonInput<KeyCode>>,
     beat_mute: ResMut<'w, BeatMute>,
@@ -49,7 +51,10 @@ pub fn left_panel(
         .default_width(300.)
         .show(ctx, |ui| {
 
+            ui.heading("App Controls");
+            ui.separator();
 
+            // ----------------------------------------------
             // SPAWN WINDOW
             if ui.button("Spawn Window").clicked() {
                 let second_window = commands
@@ -81,8 +86,12 @@ pub fn left_panel(
                     PropagatingRenderLayers { render_layers: RenderLayers::layer(31) }
                 ));
             }
+            ui.separator();
 
+
+            // ----------------------------------------------
             // BPM CONTROLS
+
             // Gather BPM data
             if beat_controls_params.bpm_data.len() >= 300 { beat_controls_params.bpm_data.pop_front(); }
             beat_controls_params.bpm_data.push_back(beat_controls_params.bpm_guesser.calculate_bpm());
@@ -90,10 +99,18 @@ pub fn left_panel(
 
             ui.horizontal(|ui| {
                 ui.label("Beat: ");
-                if beat_controls_params.beat_reader.read().len() > 0 {
+                if beat_controls_params.beat_reader.read(&beat_controls_params.beat_events).len() > 0 {
                     ui.label("BEAT");
                 }
             });
+            if ui.button("Send Beat").clicked() {
+                beat_controls_params.beat_events.send(
+                    BeatEvent {
+                        count: 0,
+                        bpm: None,
+                    }
+                );
+            }
             ui.horizontal(|ui| {
                 ui.label("BPM: ");
                 ui.label(format!("{}", beat_controls_params.bpm_data.back().unwrap_or(&0.)));
@@ -144,6 +161,8 @@ pub fn left_panel(
             if beat_controls_params.keys.just_released(KeyCode::Space) {
                 beat_controls_params.beat_mute.mute = false;
             }
+
+            // ----------------------------------------------
 
             ui.allocate_rect(ui.available_rect_before_wrap(), egui::Sense::hover());
         });
