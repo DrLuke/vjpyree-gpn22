@@ -1,5 +1,7 @@
+use std::collections::HashMap;
 use std::f32::consts::PI;
 use std::future::Future;
+use std::iter::zip;
 use std::process::Command;
 use std::ptr::read;
 use bevy::asset::Assets;
@@ -127,7 +129,7 @@ pub fn spawn_tunnelgon_system(
 
 
 // LASER
-#[derive(Clone)]
+#[derive(Copy, Clone, Debug)]
 pub enum TunnelgonBaseAnim {
     Pulse,
     SetToVal,
@@ -142,7 +144,12 @@ pub struct LaserAnimationEvent {
 }
 
 signal_ids! {
-    pub CancelAnim: Vec<usize>
+    pub CancelAnim: CancelAnimData
+}
+
+#[derive(Clone, Default)]
+pub struct CancelAnimData {
+    pub indices: HashMap<HexagonDefinition, Vec<usize>>,
 }
 
 pub fn laser_animation_system(
@@ -152,70 +159,93 @@ pub fn laser_animation_system(
     mut reactors: ResMut<Reactors>,
     mut materials: ResMut<Assets<TunnelgonMaterial>>,
 ) {
-    for ev in event_reader.read() {
-        let signal = reactors.get_named::<CancelAnim>("cancel_tunnelgon_laser_anim");
-        signal.send(ev.indices.clone());
+    // Accumulate all events for this frame into single dataset
+    let anim_data: Vec<(HexagonDefinition, TunnelgonBaseAnim, usize, f32)> = event_reader.read().flat_map(
+        |ev| {
+            let zipped_i_v: Vec<(usize, f32)> = ev.indices.iter().enumerate().map(|(i, index)| {
+                (*index, *(ev.values.get(i).unwrap_or(&0f32)))
+            }).collect();
+
+            let mut out = vec![];
+            for hex in ev.affected_hexagons.clone() {
+                for (i, v) in zipped_i_v.clone() {
+                    out.push((hex, ev.base_anim, i, v));
+                }
+            }
+            out
+        }
+    ).collect();
+
+    // Populate hashmap of hexagons -> indices to cancel and send it
+    let signal = reactors.get_named::<CancelAnim>("cancel_tunnelgon_laser_anim");
+    let mut cancel_anim_data = CancelAnimData::default();
+    for (hex, _, i, _) in anim_data.iter() {
+        let indices_for_hex = cancel_anim_data.indices.entry(*hex).or_insert(vec![*i]);
+        indices_for_hex.push(*i);
+    }
+    signal.send(cancel_anim_data);
+
+    for (hex, base_anim, laser_index, laser_value) in anim_data.iter().cloned() {
         for (entity, tg, tgm) in query.iter() {
-            if !ev.affected_hexagons.contains(&tg.hexagon_definition) {
+            if hex != tg.hexagon_definition {
                 continue;
             }
             let tgm_material = materials.get_mut(tgm).unwrap();
-            for (i, li) in ev.indices.iter().enumerate() {
-                if li.clone() >= 8 { warn!("Got index out of range: {}", li) }
-                let laser_index = li.clone() % 8;
-                let laser_value = ev.values.get(i).unwrap_or(&0.).clone();
-                let entity_cloned = entity.clone();
+            if laser_index >= 8 { warn!("Got index out of range: {}", laser_index) }
+            let laser_index = laser_index % 8;
+            let entity_cloned = entity.clone();
 
-                match ev.base_anim {
-                    TunnelgonBaseAnim::SetToVal => {
-                        tgm_material.params.laser[laser_index] = laser_value;
-                    }
-                    TunnelgonBaseAnim::Pulse => {
-                        commands.spawn_task(move || async move {
-                            let signal = world().named_signal::<CancelAnim>("cancel_tunnelgon_laser_anim");
-                            let _ = signal.poll().await;
+            match base_anim {
+                TunnelgonBaseAnim::SetToVal => {
+                    tgm_material.params.laser[laser_index] = laser_value;
+                }
+                TunnelgonBaseAnim::Pulse => {
+                    commands.spawn_task(move || async move {
+                        let signal = world().named_signal::<CancelAnim>("cancel_tunnelgon_laser_anim");
+                        let _ = signal.poll().await;
 
-                            let tunnelgon_entity = world().entity(entity_cloned);
-                            let materials = world().resource::<Assets<TunnelgonMaterial>>();
+                        let tunnelgon_entity = world().entity(entity_cloned);
+                        let materials = world().resource::<Assets<TunnelgonMaterial>>();
 
-                            // Spawn PT1 anim
-                            let pt1_entity = world().spawn_bundle(
-                                Pt1Anim {
-                                    val: laser_value.clone(),
-                                    target: 0.,
-                                    time_constant: 0.03,
-                                }
-                            ).await.id();
-                            let pt1_component = world().entity(pt1_entity).component::<Pt1Anim>();
+                        // Spawn PT1 anim
+                        let pt1_entity = world().spawn_bundle(
+                            Pt1Anim {
+                                val: laser_value.clone(),
+                                target: 0.,
+                                time_constant: 0.03,
+                            }
+                        ).await.id();
+                        let pt1_component = world().entity(pt1_entity).component::<Pt1Anim>();
 
-                            let mat_handle = tunnelgon_entity.component::<Handle<TunnelgonMaterial>>()
-                                .get(|mat_handle| mat_handle.clone()).await.unwrap();
+                        let mat_handle = tunnelgon_entity.component::<Handle<TunnelgonMaterial>>()
+                            .get(|mat_handle| mat_handle.clone()).await.unwrap();
 
-                            // While the PT1 is still going, update the material
-                            loop {
-                                // Check if animation is meant to cancel
-                                if let Some(cancel_indices) = signal.try_read() {
-                                    if cancel_indices.contains(&laser_index) {
+                        // While the PT1 is still going, update the material
+                        loop {
+                            // Check if animation is meant to cancel
+                            if let Some(cancel_data) = signal.try_read() {
+                                if let Some(indices) = cancel_data.indices.get(&hex) {
+                                    if indices.contains(&laser_index) {
                                         break;
                                     }
                                 }
-
-                                let (next_val, finished) = pt1_component.get(|pt1anim| { (pt1anim.get_val(), pt1anim.target_reached()) }).await.unwrap_or((0., true));
-                                let mat_handle_cloned = mat_handle.clone();
-                                let _ = materials.set(move |mut materials| {
-                                    let mut mat = materials.get_mut(mat_handle_cloned).unwrap();
-                                    mat.params.laser[laser_index] = next_val
-                                }).await.unwrap();
-                                if finished {
-                                    break;
-                                }
                             }
 
-                            world().entity(pt1_entity).despawn().await;
+                            let (next_val, finished) = pt1_component.get(|pt1anim| { (pt1anim.get_val(), pt1anim.target_reached()) }).await.unwrap_or((0., true));
+                            let mat_handle_cloned = mat_handle.clone();
+                            let _ = materials.set(move |mut materials| {
+                                let mut mat = materials.get_mut(mat_handle_cloned).unwrap();
+                                mat.params.laser[laser_index] = next_val
+                            }).await.unwrap();
+                            if finished {
+                                break;
+                            }
+                        }
 
-                            Ok(())
-                        });
-                    }
+                        world().entity(pt1_entity).despawn().await;
+
+                        Ok(())
+                    });
                 }
             }
         }
@@ -223,13 +253,13 @@ pub fn laser_animation_system(
 }
 
 // RINGS
-#[derive(Clone)]
+#[derive(Copy, Clone)]
 pub enum RingBasePosAnim {
     SetToPosition,
     SlideLinear,
 }
 
-#[derive(Clone)]
+#[derive(Copy, Clone)]
 pub enum RingBaseValAnim {
     SetToVal,
     Pulse,
@@ -253,120 +283,144 @@ pub fn ring_animation_system(
     mut reactors: ResMut<Reactors>,
     mut materials: ResMut<Assets<TunnelgonMaterial>>,
 ) {
-    for ev in event_reader.read() {
-        let signal = reactors.get_named::<CancelAnim>("cancel_tunnelgon_ring_anim");
-        signal.send(ev.indices.clone());
+    // Accumulate all events for this frame into single dataset
+    let anim_data: Vec<(HexagonDefinition, RingBasePosAnim, RingBaseValAnim, usize, f32, f32, f32)> = event_reader.read().flat_map(
+        |ev| {
+            let zipped_i_v: Vec<(usize, f32, f32, f32)> = ev.indices.iter().enumerate().map(|(i, index)| {
+                (*index, *(ev.values.get(i).unwrap_or(&0f32)), *(ev.positions_from.get(i).unwrap_or(&0f32)), *(ev.positions_to.get(i).unwrap_or(&0f32)))
+            }).collect();
+
+            let mut out = vec![];
+            for hex in ev.affected_hexagons.clone() {
+                for (i, v, from, to) in zipped_i_v.clone() {
+                    out.push((hex, ev.base_pos_anim, ev.base_val_anim, i, v, from, to));
+                }
+            }
+            out
+        }
+    ).collect();
+
+    // Populate hashmap of hexagons -> indices to cancel and send it
+    let signal = reactors.get_named::<CancelAnim>("cancel_tunnelgon_ring_anim");
+    let mut cancel_anim_data = CancelAnimData::default();
+    for (hex, _, _, i, _, _, _) in anim_data.iter() {
+        let indices_for_hex = cancel_anim_data.indices.entry(*hex).or_insert(vec![*i]);
+        indices_for_hex.push(*i);
+    }
+    signal.send(cancel_anim_data);
+
+    for (hex, base_pos_anim, base_val_anim, ring_index, ring_value, ring_pos_from, ring_pos_to) in anim_data.iter().cloned() {
         for (entity, tg, tgm) in query.iter() {
-            if !ev.affected_hexagons.contains(&tg.hexagon_definition) {
+            if hex != tg.hexagon_definition {
                 continue;
             }
             let tgm_material = materials.get_mut(tgm).unwrap();
-            for (i, li) in ev.indices.iter().enumerate() {
-                if li.clone() >= 8 { warn!("Got index out of range: {}", li) }
-                let ring_index = li.clone() % 8;
-                let ring_value = ev.values.get(i).unwrap_or(&0.).clone();
-                let ring_pos_from = ev.positions_from.get(i).unwrap_or(&0.).clone();
-                let ring_pos_to = ev.positions_to.get(i).unwrap_or(&0.).clone();
-                let entity_cloned = entity.clone();
 
-                match ev.base_pos_anim {
-                    RingBasePosAnim::SetToPosition => { tgm_material.params.rings_pos[ring_index] = ring_pos_to; }
-                    RingBasePosAnim::SlideLinear => {
-                        commands.spawn_task(move || async move {
-                            let signal = world().named_signal::<CancelAnim>("cancel_tunnelgon_ring_anim");
-                            let _ = signal.poll().await;
+            if ring_index.clone() >= 8 { warn!("Got index out of range: {}", ring_index) }
+            let ring_index = ring_index.clone() % 8;
+            let entity_cloned = entity.clone();
 
-                            let tunnelgon_entity = world().entity(entity_cloned);
-                            let materials = world().resource::<Assets<TunnelgonMaterial>>();
+            match base_pos_anim {
+                RingBasePosAnim::SetToPosition => { tgm_material.params.rings_pos[ring_index] = ring_pos_to; }
+                RingBasePosAnim::SlideLinear => {
+                    commands.spawn_task(move || async move {
+                        let signal = world().named_signal::<CancelAnim>("cancel_tunnelgon_ring_anim");
+                        let _ = signal.poll().await;
 
-                            // Spawn Linear anim
-                            let anim_entity = world().spawn_bundle(
-                                LinearAnim {
-                                    val: ring_pos_from,
-                                    target: ring_pos_to,
-                                    speed: 1.
-                                }
-                            ).await.id();
-                            let anim_component = world().entity(anim_entity).component::<LinearAnim>();
+                        let tunnelgon_entity = world().entity(entity_cloned);
+                        let materials = world().resource::<Assets<TunnelgonMaterial>>();
 
-                            let mat_handle = tunnelgon_entity.component::<Handle<TunnelgonMaterial>>()
-                                .get(|mat_handle| mat_handle.clone()).await.unwrap();
+                        // Spawn Linear anim
+                        let anim_entity = world().spawn_bundle(
+                            LinearAnim {
+                                val: ring_pos_from,
+                                target: ring_pos_to,
+                                speed: 1.,
+                            }
+                        ).await.id();
+                        let anim_component = world().entity(anim_entity).component::<LinearAnim>();
 
-                            // While the Anim is still going, update the material
-                            loop {
-                                // Check if animation is meant to cancel
-                                if let Some(cancel_indices) = signal.try_read() {
-                                    if cancel_indices.contains(&ring_index) {
+                        let mat_handle = tunnelgon_entity.component::<Handle<TunnelgonMaterial>>()
+                            .get(|mat_handle| mat_handle.clone()).await.unwrap();
+
+                        // While the Anim is still going, update the material
+                        loop {
+                            // Check if animation is meant to cancel
+                            if let Some(cancel_data) = signal.try_read() {
+                                if let Some(indices) = cancel_data.indices.get(&hex) {
+                                    if indices.contains(&ring_index) {
                                         break;
                                     }
                                 }
-
-                                let (next_val, finished) = anim_component.get(|linear_anim| { (linear_anim.get_val(), linear_anim.target_reached()) }).await.unwrap_or((0., true));
-                                let mat_handle_cloned = mat_handle.clone();
-                                let _ = materials.set(move |mut materials| {
-                                    let mut mat = materials.get_mut(mat_handle_cloned).unwrap();
-                                    mat.params.rings_pos[ring_index] = next_val
-                                }).await.unwrap();
-                                if finished {
-                                    break;
-                                }
                             }
 
-                            world().entity(anim_entity).despawn().await;
+                            let (next_val, finished) = anim_component.get(|linear_anim| { (linear_anim.get_val(), linear_anim.target_reached()) }).await.unwrap_or((0., true));
+                            let mat_handle_cloned = mat_handle.clone();
+                            let _ = materials.set(move |mut materials| {
+                                let mut mat = materials.get_mut(mat_handle_cloned).unwrap();
+                                mat.params.rings_pos[ring_index] = next_val
+                            }).await.unwrap();
+                            if finished {
+                                break;
+                            }
+                        }
 
-                            Ok(())
-                        });
-                    }
+                        world().entity(anim_entity).despawn().await;
+
+                        Ok(())
+                    });
                 }
+            }
 
-                match ev.base_val_anim {
-                    RingBaseValAnim::SetToVal => { tgm_material.params.rings_amp[ring_index] = ring_value; }
-                    RingBaseValAnim::Pulse => {
-                        commands.spawn_task(move || async move {
-                            let signal = world().named_signal::<CancelAnim>("cancel_tunnelgon_ring_anim");
-                            let _ = signal.poll().await;
+            match base_val_anim {
+                RingBaseValAnim::SetToVal => { tgm_material.params.rings_amp[ring_index] = ring_value; }
+                RingBaseValAnim::Pulse => {
+                    commands.spawn_task(move || async move {
+                        let signal = world().named_signal::<CancelAnim>("cancel_tunnelgon_ring_anim");
+                        let _ = signal.poll().await;
 
-                            let tunnelgon_entity = world().entity(entity_cloned);
-                            let materials = world().resource::<Assets<TunnelgonMaterial>>();
+                        let tunnelgon_entity = world().entity(entity_cloned);
+                        let materials = world().resource::<Assets<TunnelgonMaterial>>();
 
-                            // Spawn Linear anim
-                            let anim_entity = world().spawn_bundle(
-                                Pt1Anim {
-                                    val: ring_value,
-                                    target: 0.,
-                                    ..default()
-                                }
-                            ).await.id();
-                            let anim_component = world().entity(anim_entity).component::<Pt1Anim>();
+                        // Spawn Linear anim
+                        let anim_entity = world().spawn_bundle(
+                            Pt1Anim {
+                                val: ring_value,
+                                target: 0.,
+                                ..default()
+                            }
+                        ).await.id();
+                        let anim_component = world().entity(anim_entity).component::<Pt1Anim>();
 
-                            let mat_handle = tunnelgon_entity.component::<Handle<TunnelgonMaterial>>()
-                                .get(|mat_handle| mat_handle.clone()).await.unwrap();
+                        let mat_handle = tunnelgon_entity.component::<Handle<TunnelgonMaterial>>()
+                            .get(|mat_handle| mat_handle.clone()).await.unwrap();
 
-                            // While the Anim is still going, update the material
-                            loop {
-                                // Check if animation is meant to cancel
-                                if let Some(cancel_indices) = signal.try_read() {
-                                    if cancel_indices.contains(&ring_index) {
+                        // While the Anim is still going, update the material
+                        loop {
+                            // Check if animation is meant to cancel
+                            if let Some(cancel_data) = signal.try_read() {
+                                if let Some(indices) = cancel_data.indices.get(&hex) {
+                                    if indices.contains(&ring_index) {
                                         break;
                                     }
                                 }
-
-                                let (next_val, finished) = anim_component.get(|pt1anim| { (pt1anim.get_val(), pt1anim.target_reached()) }).await.unwrap_or((0., true));
-                                let mat_handle_cloned = mat_handle.clone();
-                                let _ = materials.set(move |mut materials| {
-                                    let mut mat = materials.get_mut(mat_handle_cloned).unwrap();
-                                    mat.params.rings_amp[ring_index] = next_val
-                                }).await.unwrap();
-                                if finished {
-                                    break;
-                                }
                             }
 
-                            world().entity(anim_entity).despawn().await;
+                            let (next_val, finished) = anim_component.get(|pt1anim| { (pt1anim.get_val(), pt1anim.target_reached()) }).await.unwrap_or((0., true));
+                            let mat_handle_cloned = mat_handle.clone();
+                            let _ = materials.set(move |mut materials| {
+                                let mut mat = materials.get_mut(mat_handle_cloned).unwrap();
+                                mat.params.rings_amp[ring_index] = next_val
+                            }).await.unwrap();
+                            if finished {
+                                break;
+                            }
+                        }
 
-                            Ok(())
-                        });
-                    }
+                        world().entity(anim_entity).despawn().await;
+
+                        Ok(())
+                    });
                 }
             }
         }

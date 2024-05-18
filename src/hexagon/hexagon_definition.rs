@@ -1,7 +1,7 @@
 use bevy::prelude::{Component, Vec2};
 use bevy::render::view::RenderLayers;
 
-#[derive(Copy, Clone, Eq, PartialEq, Debug)]
+#[derive(Copy, Clone, Eq, PartialEq, Debug, Hash)]
 pub enum HexagonDefinition {
     Main,
     A1,
