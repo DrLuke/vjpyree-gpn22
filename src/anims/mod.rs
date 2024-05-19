@@ -11,7 +11,7 @@ use bevy::tasks::futures_lite::StreamExt;
 use bevy::time::Real;
 use bevy_defer::{AsyncAccess, AsyncCommandsExtension, AsyncFailure, in_async_context, spawn, world};
 use bevy_defer::systems::react_to_event;
-use crate::anims::meta_tunnelgon::{tunnelgon_laser_cycle_meta_anim, tunnelgon_laser_figure_eight_meta_anim, tunnelgon_laser_round_the_clock_meta_anim, TunnelgonLaserCycleMetaAnim, TunnelgonLaserFigureEightMetaAnim, TunnelgonLaserRoundTheClockMetaAnim};
+use crate::anims::meta_tunnelgon::{tunnelgon_laser_cycle_meta_anim, tunnelgon_laser_figure_eight_meta_anim, tunnelgon_laser_round_the_clock_meta_anim, tunnelgon_laser_sweep_anim, TunnelgonLaserCycleMetaAnim, TunnelgonLaserFigureEightMetaAnim, TunnelgonLaserRoundTheClockMetaAnim, TunnelgonLaserSweepMetaAnim};
 use crate::anims::tubes::{anim1, center_sweep_out};
 use crate::beat::osc_beat_receiver_system;
 use crate::hexagon::HexagonDefinition;
@@ -31,10 +31,12 @@ impl Plugin for AnimPlugin {
         app.init_resource::<TunnelgonLaserCycleMetaAnim>();
         app.init_resource::<TunnelgonLaserFigureEightMetaAnim>();
         app.init_resource::<TunnelgonLaserRoundTheClockMetaAnim>();
+        app.init_resource::<TunnelgonLaserSweepMetaAnim>();
         app.add_systems(Update, (
             tunnelgon_laser_cycle_meta_anim,
             tunnelgon_laser_figure_eight_meta_anim,
             tunnelgon_laser_round_the_clock_meta_anim,
+            tunnelgon_laser_sweep_anim,
         ).after(osc_beat_receiver_system));
     }
 }

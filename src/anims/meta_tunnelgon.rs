@@ -107,7 +107,7 @@ pub fn tunnelgon_laser_round_the_clock_meta_anim(
     mut beat_reader: EventReader<BeatEvent>,
     mut laser_writer: EventWriter<LaserAnimationEvent>,
 ) {
-    //if !params.enabled { return; }
+    if !params.enabled { return; }
     for ev in beat_reader.read() {
         let left_index = params.counter as isize;
         let right_index = 12 - (params.counter as isize);
@@ -129,3 +129,46 @@ pub fn tunnelgon_laser_round_the_clock_meta_anim(
         params.counter = (params.counter + 1) % 6;
     }
 }
+
+#[derive(Resource, Default)]
+pub struct TunnelgonLaserSweepMetaAnim {
+    pub enabled: bool,
+    counter: usize,
+}
+
+pub fn tunnelgon_laser_sweep_anim (
+    mut params: ResMut<TunnelgonLaserSweepMetaAnim>,
+    mut beat_reader: EventReader<BeatEvent>,
+    mut commands: Commands,
+) {
+    if !params.enabled { return; }
+    let c = params.counter;
+    for _ in beat_reader.read() {
+        commands.spawn_task(move || async move {
+            let mut indices = vec![
+                (4, 5),
+                (3, 0),
+                (2, 1),
+            ];
+
+            if c == 1 {
+                indices.reverse();
+            }
+
+            for ind in indices {
+                let e = world().send_event::<LaserAnimationEvent>(
+                    LaserAnimationEvent {
+                        affected_hexagons: vec![HexagonDefinition::A1, HexagonDefinition::A2, HexagonDefinition::A3, HexagonDefinition::B1, HexagonDefinition::B2, HexagonDefinition::B3,],
+                        base_anim: Pulse,
+                        indices: vec![ind.0, ind.1],
+                        values: vec![1., 1.],
+                    });
+                join!(e, world().sleep_frames(4)).await;
+            }
+
+            Ok(())
+        });
+        params.counter = (params.counter + 1) % 2;
+    }
+}
+
