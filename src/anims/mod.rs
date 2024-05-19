@@ -1,5 +1,5 @@
 mod tubes;
-mod meta;
+mod meta_tunnelgon;
 
 use std::future::{Future, poll_fn, PollFn};
 use std::pin::Pin;
@@ -11,7 +11,7 @@ use bevy::tasks::futures_lite::StreamExt;
 use bevy::time::Real;
 use bevy_defer::{AsyncAccess, AsyncCommandsExtension, AsyncFailure, in_async_context, spawn, world};
 use bevy_defer::systems::react_to_event;
-use crate::anims::meta::{tunnelgon_laser_cycle_meta_anim, tunnelgon_laser_figure_eight_meta_anim, TunnelgonLaserCycleMetaAnim, TunnelgonLaserFigureEightMetaAnim};
+use crate::anims::meta_tunnelgon::{tunnelgon_laser_cycle_meta_anim, tunnelgon_laser_figure_eight_meta_anim, tunnelgon_laser_round_the_clock_meta_anim, TunnelgonLaserCycleMetaAnim, TunnelgonLaserFigureEightMetaAnim, TunnelgonLaserRoundTheClockMetaAnim};
 use crate::anims::tubes::{anim1, center_sweep_out};
 use crate::beat::osc_beat_receiver_system;
 use crate::hexagon::HexagonDefinition;
@@ -30,9 +30,11 @@ impl Plugin for AnimPlugin {
         app.add_systems(PreUpdate, react_to_event::<OneshotAnimEvent>);
         app.init_resource::<TunnelgonLaserCycleMetaAnim>();
         app.init_resource::<TunnelgonLaserFigureEightMetaAnim>();
+        app.init_resource::<TunnelgonLaserRoundTheClockMetaAnim>();
         app.add_systems(Update, (
             tunnelgon_laser_cycle_meta_anim,
             tunnelgon_laser_figure_eight_meta_anim,
+            tunnelgon_laser_round_the_clock_meta_anim,
         ).after(osc_beat_receiver_system));
     }
 }

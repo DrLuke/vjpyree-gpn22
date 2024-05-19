@@ -10,7 +10,7 @@ use crate::hexagon::HexagonDefinition;
 
 #[derive(Resource, Default)]
 pub struct TunnelgonLaserCycleMetaAnim {
-    enabled: bool,
+    pub enabled: bool,
     counter: usize,
 }
 
@@ -38,7 +38,7 @@ pub fn tunnelgon_laser_cycle_meta_anim(
 
 #[derive(Resource, Default)]
 pub struct TunnelgonLaserFigureEightMetaAnim {
-    enabled: bool,
+    pub enabled: bool,
 }
 
 pub fn tunnelgon_laser_figure_eight_meta_anim(
@@ -46,7 +46,7 @@ pub fn tunnelgon_laser_figure_eight_meta_anim(
     mut beat_reader: EventReader<BeatEvent>,
     mut commands: Commands,
 ) {
-    //if !params.enabled { return; }
+    if !params.enabled { return; }
     for _ in beat_reader.read() {
         commands.spawn_task(|| async move {
             let params = world().resource::<TunnelgonLaserFigureEightMetaAnim>();
@@ -93,5 +93,39 @@ pub fn tunnelgon_laser_figure_eight_meta_anim(
 
             Ok(())
         });
+    }
+}
+
+#[derive(Resource, Default)]
+pub struct TunnelgonLaserRoundTheClockMetaAnim {
+    pub enabled: bool,
+    counter: usize,
+}
+
+pub fn tunnelgon_laser_round_the_clock_meta_anim(
+    mut params: ResMut<TunnelgonLaserRoundTheClockMetaAnim>,
+    mut beat_reader: EventReader<BeatEvent>,
+    mut laser_writer: EventWriter<LaserAnimationEvent>,
+) {
+    //if !params.enabled { return; }
+    for ev in beat_reader.read() {
+        let left_index = params.counter as isize;
+        let right_index = 12 - (params.counter as isize);
+        laser_writer.send(
+            LaserAnimationEvent {
+                affected_hexagons: vec![HexagonDefinition::A1, HexagonDefinition::A2, HexagonDefinition::A3],
+                base_anim: Pulse,
+                indices: vec![(left_index % 6) as usize, ((left_index + 3) % 6) as usize],
+                values: vec![1., 1.],
+            });
+        laser_writer.send(
+            LaserAnimationEvent {
+                affected_hexagons: vec![HexagonDefinition::B1, HexagonDefinition::B2, HexagonDefinition::B3],
+                base_anim: Pulse,
+                indices: vec![(right_index % 6) as usize, ((right_index - 3) % 6) as usize],
+                values: vec![1., 1.],
+            });
+        println!("Counter: {}, left: {:?}, right: {:?}", params.counter, vec![(left_index % 6) as usize, ((left_index + 3) % 6) as usize], vec![(right_index % 6) as usize, ((right_index - 3) % 6) as usize]);
+        params.counter = (params.counter + 1) % 6;
     }
 }
