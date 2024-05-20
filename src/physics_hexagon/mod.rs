@@ -14,7 +14,6 @@ use crate::hexagon::HexagonDefinition;
 use crate::physics_hexagon::effectors::EffectorsPlugin;
 use crate::physics_hexagon::hexagon_colliders::spawn_hexagon_collier;
 use crate::physics_hexagon::lights::{spawn_led_tubes};
-use crate::physics_hexagon::lights::animations::wave_animation_system;
 use crate::physics_hexagon::lights::physical_lights::{drive_lights_system, HexagonLights, PhysicalLedTube, PhysicalLedTubeLed, PhysicalTubeIndex, spawn_physical_leds};
 use crate::physics_hexagon::render::PhysicsHexagonRenderTarget;
 use crate::propagating_render_layers::PropagatingRenderLayers;

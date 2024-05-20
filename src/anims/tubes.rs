@@ -1,9 +1,49 @@
 use std::f32::consts::PI;
 use std::future::join;
-use bevy::prelude::{Color, GlobalTransform, Query, Real, Time};
+use bevy::prelude::{Color, EventReader, GlobalTransform, Local, Parent, Query, Real, Res, ResMut, Resource, Time, With};
 use bevy_defer::{AsyncAccess, AsyncFailure, world};
 use crate::anims::AnimColors;
-use crate::physics_hexagon::lights::led_tube::LedTubeLed;
+use crate::beat::BeatEvent;
+use crate::parameter_animation::Pt1Anim;
+use crate::physics_hexagon::lights::led_tube::{LedTube, LedTubeLed};
+
+#[derive(Resource, Default)]
+pub struct TubesWaveAnims {
+    pub(crate) wave: usize,
+    accum: f32,
+}
+
+pub fn wave_simple(
+    mut query: Query<(&mut LedTubeLed, &GlobalTransform)>,
+    time: Res<Time>,
+    mut params: ResMut<TubesWaveAnims>,
+    colors: Res<AnimColors>,
+    mut beat_reader: EventReader<BeatEvent>,
+) {
+    if params.wave == 1 { params.accum += time.delta_seconds(); } else if params.wave == 2 { params.accum -= time.delta_seconds(); } else { return; }
+
+    for (mut ltl, gt) in query.iter_mut() {
+        let x = gt.translation().x;
+        ltl.color = colors.primary * (x * 0.005 - params.accum * 2. * x.signum()).sin().powf(8.)
+            + colors.secondary * (0.2 + (x * 0.005 - params.accum * 2. * x.signum() + PI / 2.).sin().powf(8.) * 0.1);
+    }
+}
+
+pub fn wave_blocky(
+    mut query: Query<(&mut LedTubeLed, &GlobalTransform, &Parent)>,
+    mut p_query: Query<&GlobalTransform, With<LedTube>>,
+    time: Res<Time>,
+    colors: Res<AnimColors>,
+    mut params: ResMut<TubesWaveAnims>,
+) {
+    if params.wave == 3 { params.accum += time.delta_seconds(); } else if params.wave == 4 { params.accum -= time.delta_seconds(); } else { return; }
+    for (mut ltl, gt_ltl, parent) in query.iter_mut() {
+        let gt = p_query.get(parent.get()).unwrap();
+        let x = (gt.translation().x*2. + gt_ltl.translation().x) / 3.;
+        ltl.color = colors.primary * (x * 0.005 - params.accum * 2. * x.signum()).sin().powf(8.)
+            + colors.secondary * (0.2 + (x * 0.005 - params.accum * 2. * x.signum() + PI / 2.).sin().powf(8.) * 0.1);
+    }
+}
 
 pub async fn anim1(speed: f32) -> Result<(), AsyncFailure> {
     let tubes = world().query::<(&mut LedTubeLed, &GlobalTransform)>();

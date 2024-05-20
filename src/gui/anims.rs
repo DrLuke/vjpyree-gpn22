@@ -4,6 +4,7 @@ use bevy::utils::default;
 use bevy_egui::{egui, EguiContexts};
 use bevy_egui::egui::{Color32, RichText, Ui, WidgetText};
 use crate::anims::meta_tunnelgon::{TunnelgonLaserCycleMetaAnim, TunnelgonLaserFigureEightMetaAnim, TunnelgonLaserRoundTheClockMetaAnim, TunnelgonLaserSweepMetaAnim, TunnelgonRingsBTFMetaAnim, TunnelgonRingsFTBMetaAnim, TunnelgonRingsTrainMetaAnim};
+use crate::anims::tubes::TubesWaveAnims;
 use crate::beat::BeatEvent;
 
 
@@ -41,9 +42,26 @@ pub struct TgMetaAnimStorage {
     ring_train: bool,
 }
 
+#[derive(SystemParam)]
+pub struct TubesAnim<'w> {
+    wave: ResMut<'w, TubesWaveAnims>
+}
+
+impl TubesAnim<'_> {
+    fn load_storage(&mut self, storage: TubesAnimStorage) {
+        self.wave.wave = storage.wave;
+    }
+}
+
+#[derive(Default, Copy, Clone)]
+pub struct TubesAnimStorage {
+    wave: usize,
+}
+
 #[derive(Default, Copy, Clone)]
 pub struct MetaAnimStorage {
     tg: TgMetaAnimStorage,
+    tubes: TubesAnimStorage,
 }
 
 #[derive(Default)]
@@ -58,6 +76,7 @@ pub struct MetaAnimMemory {
 pub fn anim_gui(
     mut contexts: EguiContexts,
     mut tg: TgMetaAnim,
+    mut tubes: TubesAnim,
     mut memory: Local<MetaAnimMemory>,
     mut beat_reader: EventReader<BeatEvent>,
 ) {
@@ -99,6 +118,22 @@ pub fn anim_gui(
             ui.horizontal(|ui| {
                 anim_button(ui, button_width, button_height, &mut settings.tg.ring_train, "Train");
             });
+
+            ui.separator();
+            ui.label("Tubes");
+            ui.horizontal(|ui| {
+               tubes_button(ui, button_width, button_height, &mut settings.tubes.wave, 1, "Wave Out");
+               tubes_button(ui, button_width, button_height, &mut settings.tubes.wave, 2, "Wave In");
+            });
+            ui.horizontal(|ui| {
+                tubes_button(ui, button_width, button_height, &mut settings.tubes.wave, 3, "??");
+                tubes_button(ui, button_width, button_height, &mut settings.tubes.wave, 4, "??");
+            });
+            ui.horizontal(|ui| {
+                tubes_button(ui, button_width, button_height, &mut settings.tubes.wave, 0, "Wave Off");
+                //tubes_button(ui, button_width, button_height, &mut settings.tubes.wave, 2);
+            });
+
 
             ui.separator();
             ui.label("Presets");
@@ -154,6 +189,7 @@ pub fn anim_gui(
 
             // Load current settings
             tg.load_storage(memory.current.tg);
+            tubes.load_storage(memory.current.tubes)
         });
 }
 
@@ -164,12 +200,23 @@ fn anim_button(ui: &mut Ui, width: f32, height: f32, toggle: &mut bool, text: im
     };
 }
 
+fn tubes_button(ui: &mut Ui, width: f32, height: f32, wave: &mut usize, wave_set: usize, text: impl Into<WidgetText>) {
+    if ui.add_sized([width, height], egui::SelectableLabel::new(*wave == wave_set, text))
+        .clicked() {
+        *wave = wave_set;
+    };
+}
+
 fn preset1() -> MetaAnimStorage {
     MetaAnimStorage {
         tg: TgMetaAnimStorage {
             laser_round_the_clock: true,
             ring_ftb: true,
             ring_btf: true,
+            ..default()
+        },
+        tubes: TubesAnimStorage {
+            wave: 1,
             ..default()
         },
         ..default()
