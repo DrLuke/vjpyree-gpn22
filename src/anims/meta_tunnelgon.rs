@@ -3,7 +3,7 @@ use std::future::join;
 use bevy::prelude::{Commands, error, EventReader, EventWriter, ResMut, Resource};
 use bevy_defer::{AsyncCommandsExtension, world};
 use crate::beat::BeatEvent;
-use crate::elements2d::tunnelgon::LaserAnimationEvent;
+use crate::elements2d::tunnelgon::{LaserAnimationEvent, RingAnimationEvent, RingBasePosAnim, RingBaseValAnim};
 use crate::elements2d::tunnelgon::TunnelgonBaseAnim::Pulse;
 use crate::hexagon::HexagonDefinition;
 
@@ -136,39 +136,111 @@ pub struct TunnelgonLaserSweepMetaAnim {
     counter: usize,
 }
 
-pub fn tunnelgon_laser_sweep_anim (
+pub fn tunnelgon_laser_sweep_anim(
     mut params: ResMut<TunnelgonLaserSweepMetaAnim>,
     mut beat_reader: EventReader<BeatEvent>,
-    mut commands: Commands,
+    mut laser_writer: EventWriter<LaserAnimationEvent>,
 ) {
     if !params.enabled { return; }
-    let c = params.counter;
     for _ in beat_reader.read() {
-        commands.spawn_task(move || async move {
-            let mut indices = vec![
-                (4, 5),
-                (3, 0),
-                (2, 1),
-            ];
+        let mut indices = vec![
+            (4, 5),
+            (3, 0),
+            (2, 1),
+            (3, 0),
+        ];
 
-            if c == 1 {
-                indices.reverse();
-            }
-
-            for ind in indices {
-                let e = world().send_event::<LaserAnimationEvent>(
-                    LaserAnimationEvent {
-                        affected_hexagons: vec![HexagonDefinition::A1, HexagonDefinition::A2, HexagonDefinition::A3, HexagonDefinition::B1, HexagonDefinition::B2, HexagonDefinition::B3,],
-                        base_anim: Pulse,
-                        indices: vec![ind.0, ind.1],
-                        values: vec![1., 1.],
-                    });
-                join!(e, world().sleep_frames(4)).await;
-            }
-
-            Ok(())
+        let ind = indices[params.counter];
+        laser_writer.send(LaserAnimationEvent {
+            affected_hexagons: vec![HexagonDefinition::A1, HexagonDefinition::A2, HexagonDefinition::A3, HexagonDefinition::B1, HexagonDefinition::B2, HexagonDefinition::B3],
+            base_anim: Pulse,
+            indices: vec![ind.0, ind.1],
+            values: vec![1., 1.],
         });
-        params.counter = (params.counter + 1) % 2;
+
+        params.counter = (params.counter + 1) % 4;
     }
 }
 
+#[derive(Resource, Default)]
+pub struct TunnelgonRingsFTBMetaAnim {
+    pub enabled: bool,
+    counter: usize,
+}
+
+pub fn tunnelgon_rings_ftb_meta_anim(
+    mut params: ResMut<TunnelgonRingsFTBMetaAnim>,
+    mut beat_reader: EventReader<BeatEvent>,
+    mut ring_writer: EventWriter<RingAnimationEvent>,
+) {
+    if !params.enabled { return; }
+    for _ in beat_reader.read() {
+        ring_writer.send(RingAnimationEvent {
+            affected_hexagons: vec![HexagonDefinition::A1, HexagonDefinition::A2, HexagonDefinition::A3, HexagonDefinition::B1, HexagonDefinition::B2, HexagonDefinition::B3],
+            base_pos_anim: RingBasePosAnim::SlideLinear,
+            base_val_anim: RingBaseValAnim::Pulse,
+            indices: vec![params.counter],
+            values: vec![1.],
+            positions_from: vec![0.],
+            positions_to: vec![1.],
+        });
+    }
+    params.counter = (params.counter + 1) % 2;
+}
+
+#[derive(Resource, Default)]
+pub struct TunnelgonRingsBTFMetaAnim {
+    pub enabled: bool,
+    counter: usize,
+}
+
+pub fn tunnelgon_rings_btf_meta_anim(
+    mut params: ResMut<TunnelgonRingsBTFMetaAnim>,
+    mut beat_reader: EventReader<BeatEvent>,
+    mut ring_writer: EventWriter<RingAnimationEvent>,
+) {
+    if !params.enabled { return; }
+    for _ in beat_reader.read() {
+        ring_writer.send(RingAnimationEvent {
+            affected_hexagons: vec![HexagonDefinition::A1, HexagonDefinition::A2, HexagonDefinition::A3, HexagonDefinition::B1, HexagonDefinition::B2, HexagonDefinition::B3],
+            base_pos_anim: RingBasePosAnim::SlideLinear,
+            base_val_anim: RingBaseValAnim::Pulse,
+            indices: vec![params.counter + 2],
+            values: vec![1.],
+            positions_from: vec![0.5],
+            positions_to: vec![-0.5],
+        });
+    }
+    params.counter = (params.counter + 1) % 2;
+}
+
+#[derive(Resource, Default)]
+pub struct TunnelgonRingsTrainMetaAnim {
+    pub enabled: bool,
+}
+
+pub fn tunnelgon_ring_train_meta_anim(
+    mut params: ResMut<TunnelgonRingsTrainMetaAnim>,
+    mut beat_reader: EventReader<BeatEvent>,
+    mut ring_writer: EventWriter<RingAnimationEvent>,
+) {
+    if !params.enabled { return; }
+    for _ in beat_reader.read() {
+        ring_writer.send(RingAnimationEvent {
+            affected_hexagons: vec![
+                HexagonDefinition::A1,
+                HexagonDefinition::A2,
+                HexagonDefinition::A3,
+                HexagonDefinition::B1,
+                HexagonDefinition::B2,
+                HexagonDefinition::B3,
+            ],
+            base_pos_anim: RingBasePosAnim::SlideLinear,
+            base_val_anim: RingBaseValAnim::Pulse,
+            indices: vec![0, 1, 2, 3, 4],
+            positions_from: vec![0., 0.1, 0.2, 0.3, 0.4],
+            positions_to: vec![1.1, 1.2, 1.3, 1.4, 1.5],
+            values: vec![1.; 5],
+        });
+    }
+}

@@ -31,7 +31,7 @@ pub fn linear_anim_system(
     for mut anim in query.iter_mut() {
         let diff = anim.target - anim.val;
         let step = diff.signum() * time.delta_seconds() * anim.speed;
-        if step < diff {
+        if step.abs() < diff.abs() {
             anim.val += step;
         } else {
             anim.val = anim.target;
