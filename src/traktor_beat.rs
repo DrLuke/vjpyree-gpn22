@@ -3,6 +3,7 @@ use bevy::utils::tracing::event;
 use crate::beat::{BeatCounter, BeatEvent};
 use bevy_rosc::{method_dispatcher_system, MultiAddressOscMethod, OscDispatcher, SingleAddressOscMethod};
 use rosc::OscType;
+use crate::gui::left_panel::BeatMute;
 
 pub struct TraktorPlugin;
 
@@ -43,6 +44,7 @@ pub fn traktor_beat_system(
     mut event_writer: EventWriter<BeatEvent>,
     mut beat_counter: ResMut<BeatCounter>,
     mut traktor_beat: ResMut<TraktorBeat>,
+    beat_mute: Res<BeatMute>,
 ) {
     let maybe = query.get_single_mut();
     if maybe.is_err() { return; }
@@ -60,7 +62,9 @@ pub fn traktor_beat_system(
         }
         if traktor_beat.count >= 24 {
             traktor_beat.count = 0;
-            event_writer.send(BeatEvent { count: beat_counter.count, bpm: None });
+            if !beat_mute.mute {
+                event_writer.send(BeatEvent { count: beat_counter.count, bpm: None });
+            }
         }
     }
 }

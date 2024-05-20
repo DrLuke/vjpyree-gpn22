@@ -9,7 +9,7 @@ use crate::gui::left_panel::{BeatMute, left_panel};
 mod effectors;
 mod elements2d;
 mod anims;
-mod left_panel;
+pub mod left_panel;
 
 pub struct GuiPlugin;
 
