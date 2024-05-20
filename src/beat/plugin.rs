@@ -24,7 +24,7 @@ impl Plugin for OscBeatReceiverPlugin {
             .add_event::<BeatEvent>()
             .add_systems(PreUpdate, osc_beat_receiver_system.after(method_dispatcher_system::<SingleAddressOscMethod>))
             .insert_resource(BpmGuesser::default())
-            .add_systems(PreUpdate, bpm_guesser_system.after(method_dispatcher_system::<SingleAddressOscMethod>))
+            .add_systems(PreUpdate, bpm_guesser_system.after(osc_beat_receiver_system))
         ;
         app.world.spawn((
             OscBeatReceiver {},
