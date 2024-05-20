@@ -88,7 +88,11 @@ fn fragment(mesh: VertexOutput) -> @location(0) vec4<f32> {
     let ringmask = ring(uvt, params.rings_pos[0], params.rings_amp[0]) +
     ring(uvt, params.rings_pos[1], params.rings_amp[1]) +
     ring(uvt, params.rings_pos[2], params.rings_amp[2]) +
-    ring(uvt, params.rings_pos[3], params.rings_amp[3]);
+    ring(uvt, params.rings_pos[3], params.rings_amp[3]) +
+    ring(uvt, params.rings_pos[4], params.rings_amp[4]) +
+    ring(uvt, params.rings_pos[5], params.rings_amp[5]) +
+    ring(uvt, params.rings_pos[6], params.rings_amp[6]) +
+    ring(uvt, params.rings_pos[7], params.rings_amp[7]);
 
     var off_samp = textureSample(prev, prev_sampler, mesh.position.xy/vec2<f32>(1920,1080) + samp.xy*0.001*rot2(length(uvc*10.)));
 

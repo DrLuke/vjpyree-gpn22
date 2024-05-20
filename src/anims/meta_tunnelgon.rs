@@ -237,10 +237,10 @@ pub fn tunnelgon_ring_train_meta_anim(
             ],
             base_pos_anim: RingBasePosAnim::SlideLinear,
             base_val_anim: RingBaseValAnim::Pulse,
-            indices: vec![0, 1, 2, 3, 4],
-            positions_from: vec![0., 0.1, 0.2, 0.3, 0.4],
-            positions_to: vec![1.1, 1.2, 1.3, 1.4, 1.5],
-            values: vec![1.; 5],
+            indices: vec![4, 5, 6, 7],
+            positions_from: vec![0., 0.1, 0.2, 0.3],
+            positions_to: vec![1.1, 1.2, 1.3, 1.4],
+            values: vec![1.; 4],
         });
     }
 }
