@@ -11,7 +11,9 @@ pub mod beat;
 pub mod anims;
 mod render_main;
 
+use bevy::app::MainScheduleOrder;
 use bevy::core::Zeroable;
+use bevy::ecs::schedule::ScheduleLabel;
 use bevy::prelude::*;
 use bevy_defer::AsyncPlugin;
 use bevy_egui::EguiPlugin;
@@ -29,8 +31,16 @@ use crate::propagating_render_layers::{PropagatingRenderLayersPlugin};
 use crate::render_main::RenderMainPlugin;
 use crate::traktor_beat::TraktorPlugin;
 
+
+#[derive(ScheduleLabel, Debug, Clone, PartialEq, Eq, Hash)]
+pub struct GuiUpdate;
+
+#[derive(ScheduleLabel, Debug, Clone, PartialEq, Eq, Hash)]
+pub struct MetaAnimUpdate;
+
 fn main() {
-    App::new()
+    let mut app = App::new();
+        app
         .add_plugins(DefaultPlugins)
         .add_plugins(EguiPlugin)
         .add_plugins(AsyncPlugin::default_settings())
@@ -55,8 +65,17 @@ fn main() {
             OscBeatReceiverPlugin::default(),
         ))
         .add_systems(Startup, startup)
-        .add_plugins(AnimPlugin)
-        .run();
+        .add_plugins(AnimPlugin);
+
+    app.init_schedule(GuiUpdate);
+    app.world.resource_mut::<MainScheduleOrder>()
+        .insert_after(PreUpdate, GuiUpdate);
+
+    app.init_schedule(MetaAnimUpdate);
+    app.world.resource_mut::<MainScheduleOrder>()
+        .insert_after(GuiUpdate, MetaAnimUpdate);
+
+    app.run();
 }
 
 fn startup(

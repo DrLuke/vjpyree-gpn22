@@ -1,5 +1,6 @@
 use bevy::app::App;
 use bevy::prelude::{Plugin, Update};
+use crate::GuiUpdate;
 use crate::gui::anims::anim_gui;
 use crate::gui::effectors::effectors_gui;
 use crate::gui::elements2d::elements_2d_gui;
@@ -15,6 +16,6 @@ pub struct GuiPlugin;
 impl Plugin for GuiPlugin{
     fn build(&self, app: &mut App) {
         app.insert_resource(BeatMute::default());
-        app.add_systems(Update, (effectors_gui, elements_2d_gui, anim_gui, left_panel));
+        app.add_systems(GuiUpdate, (effectors_gui, elements_2d_gui, anim_gui, left_panel));
     }
 }

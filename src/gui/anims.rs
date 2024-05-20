@@ -103,7 +103,7 @@ pub fn anim_gui(
             ui.separator();
             ui.label("Presets");
             if ui.button("Preset 1").clicked() {
-                memory.next = Some(preset1(&mut tg))
+                memory.next = Some(preset1())
             }
 
             ui.separator();

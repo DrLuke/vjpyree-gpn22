@@ -15,6 +15,7 @@ use crate::anims::meta_tunnelgon::{tunnelgon_laser_cycle_meta_anim, tunnelgon_la
 use crate::anims::tubes::{anim1, center_sweep_out};
 use crate::beat::osc_beat_receiver_system;
 use crate::hexagon::HexagonDefinition;
+use crate::MetaAnimUpdate;
 
 
 pub struct AnimPlugin;
@@ -35,7 +36,7 @@ impl Plugin for AnimPlugin {
         app.init_resource::<TunnelgonRingsFTBMetaAnim>();
         app.init_resource::<TunnelgonRingsBTFMetaAnim>();
         app.init_resource::<TunnelgonRingsTrainMetaAnim>();
-        app.add_systems(Update, (
+        app.add_systems(MetaAnimUpdate, (
             tunnelgon_laser_cycle_meta_anim,
             tunnelgon_laser_figure_eight_meta_anim,
             tunnelgon_laser_round_the_clock_meta_anim,
@@ -43,7 +44,7 @@ impl Plugin for AnimPlugin {
             tunnelgon_rings_ftb_meta_anim,
             tunnelgon_rings_btf_meta_anim,
             tunnelgon_ring_train_meta_anim,
-        ).after(osc_beat_receiver_system));
+        ));
     }
 }
 
