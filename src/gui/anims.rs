@@ -50,12 +50,14 @@ pub struct TubesAnim<'w> {
 impl TubesAnim<'_> {
     fn load_storage(&mut self, storage: TubesAnimStorage) {
         self.wave.wave = storage.wave;
+        self.wave.punch = storage.punch;
     }
 }
 
 #[derive(Default, Copy, Clone)]
 pub struct TubesAnimStorage {
     wave: usize,
+    punch: bool,
 }
 
 #[derive(Default, Copy, Clone)]
@@ -131,7 +133,7 @@ pub fn anim_gui(
             });
             ui.horizontal(|ui| {
                 tubes_button(ui, button_width, button_height, &mut settings.tubes.wave, 0, "Wave Off");
-                //tubes_button(ui, button_width, button_height, &mut settings.tubes.wave, 2);
+                anim_button(ui, button_width, button_height, &mut settings.tubes.punch, "Punch");
             });
 
 
