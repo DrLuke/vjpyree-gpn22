@@ -11,7 +11,7 @@ use bevy::tasks::futures_lite::StreamExt;
 use bevy::time::Real;
 use bevy_defer::{AsyncAccess, AsyncCommandsExtension, AsyncFailure, in_async_context, spawn, world};
 use crate::anims::meta_tunnelgon::{tunnelgon_laser_cycle_meta_anim, tunnelgon_laser_figure_eight_meta_anim, tunnelgon_laser_round_the_clock_meta_anim, tunnelgon_laser_sweep_anim, tunnelgon_ring_train_meta_anim, tunnelgon_rings_btf_meta_anim, tunnelgon_rings_ftb_meta_anim, TunnelgonLaserCycleMetaAnim, TunnelgonLaserFigureEightMetaAnim, TunnelgonLaserRoundTheClockMetaAnim, TunnelgonLaserSweepMetaAnim, TunnelgonRingsBTFMetaAnim, TunnelgonRingsFTBMetaAnim, TunnelgonRingsTrainMetaAnim};
-use crate::anims::tubes::{TubesWaveAnims, wave_simple, wave_blocky, tube_punch, clear};
+use crate::anims::tubes::{TubesWaveAnims, wave_simple, wave_blocky, tube_punch, clear, sweep};
 use crate::{Clear, GuiUpdate, MetaAnimUpdate};
 
 
@@ -45,6 +45,7 @@ impl Plugin for AnimPlugin {
             wave_simple,
             wave_blocky,
             tube_punch,
+            sweep,
         ));
     }
 }

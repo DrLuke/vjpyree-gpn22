@@ -51,6 +51,8 @@ impl TubesAnim<'_> {
     fn load_storage(&mut self, storage: TubesAnimStorage) {
         self.wave.wave = storage.wave;
         self.wave.punch = storage.punch;
+        self.wave.sweep_out = storage.sweep_out;
+        self.wave.sweep_in = storage.sweep_in;
     }
 }
 
@@ -58,6 +60,8 @@ impl TubesAnim<'_> {
 pub struct TubesAnimStorage {
     wave: usize,
     punch: bool,
+    sweep_out: bool,
+    sweep_in: bool,
 }
 
 #[derive(Default, Copy, Clone)]
@@ -134,6 +138,10 @@ pub fn anim_gui(
             ui.horizontal(|ui| {
                 tubes_button(ui, button_width, button_height, &mut settings.tubes.wave, 0, "Wave Off");
                 anim_button(ui, button_width, button_height, &mut settings.tubes.punch, "Punch");
+            });
+            ui.horizontal(|ui| {
+                anim_button(ui, button_width, button_height, &mut settings.tubes.sweep_out, "Sweep out");
+                anim_button(ui, button_width, button_height, &mut settings.tubes.sweep_in, "Sweep in");
             });
 
 

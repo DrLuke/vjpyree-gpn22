@@ -3,6 +3,7 @@ use bevy::math::Quat;
 use bevy::prelude::{Commands, Component, SpatialBundle, Transform, Vec2, Vec3, BuildChildren, Color};
 use bevy::utils::default;
 use strum_macros::EnumIter;
+use crate::parameter_animation::Pt1Anim;
 
 pub const TUBE_LENGTH: f32 = 173.;
 pub const LEDS_COUNT: isize = 16;
@@ -156,7 +157,8 @@ pub fn spawn_tube(
             SpatialBundle {
                 transform: Transform::from_translation(Vec3::new(offset, 0., 0.)),
                 ..default()
-            }
+            },
+            Pt1Anim::default(),
         )).id();
         commands.entity(tube_entity).push_children(&[led_tube_led_entity]);
     }

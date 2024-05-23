@@ -11,7 +11,7 @@ use futures::future::join_all;
 use crate::anims::AnimColors;
 use crate::beat::BeatEvent;
 use crate::elements2d::tunnelgon::{CancelAnim, TunnelgonMaterial};
-use crate::parameter_animation::{ParameterAnimation, Pt1Anim};
+use crate::parameter_animation::{LinearAnim, ParameterAnimation, Pt1Anim};
 use crate::physics_hexagon::lights::led_tube::{LedTube, LedTubeLed, TubeIndex};
 use crate::physics_hexagon::lights::led_tube::TubeIndex::{Eight, Eighteen, Eleven, Fifteen, Five, Four, Fourteen, Nine, Nineteen, One, Seven, Seventeen, Six, Sixteen, Ten, Thirteen, Three, Twelve, Twenty, Twentyone, Twentytwo, Two};
 
@@ -21,6 +21,19 @@ pub struct TubesWaveAnims {
     accum: f32,
     pub punch: bool,
     punch_counter: usize,
+    pub sweep_out: bool,
+    pub sweep_in: bool,
+    sweep_accum: f32,
+}
+
+pub fn clear(
+    mut query: Query<(&mut LedTubeLed, &GlobalTransform)>,
+    colors: Res<AnimColors>,
+) {
+    for (mut ltl, gt) in query.iter_mut() {
+        let x = gt.translation().x;
+        ltl.color = colors.secondary.clone() * 0.2;
+    }
 }
 
 pub fn wave_simple(
@@ -127,8 +140,8 @@ pub fn tube_punch(
                     let futures: Vec<ChannelOut<AsyncResult<_>>> = led_tube_entities.iter().map(|ent| {
                         ent.component::<LedTubeLed>().set(move |ltl| {
                             let ind = (ltl.get_index() as f32 / 15.) - 0.5;
-                            let lum = next_val * (ind * (1.3-next_val) * 2.).cos();
-                            ltl.color = primary_color.clone() * lum + secondary_color.clone() * (1.-lum.min(1.)) * 0.2;
+                            let lum = next_val * (ind * (1.3 - next_val) * 2.).cos();
+                            ltl.color = primary_color.clone() * lum + secondary_color.clone() * (1. - lum.min(1.)) * 0.2;
                         })
                     }).collect();
                     let _ = join_all(futures).await;
@@ -144,6 +157,39 @@ pub fn tube_punch(
         }
     }
 }
+
+pub fn sweep(
+    mut query: Query<(&mut LedTubeLed, &GlobalTransform)>,
+    mut params: ResMut<TubesWaveAnims>,
+    mut beat_reader: EventReader<BeatEvent>,
+    colors: Res<AnimColors>,
+    time: Res<Time<Real>>,
+) {
+    if !params.sweep_out && !params.sweep_in { return; }
+
+    for _ in beat_reader.read() {
+        params.sweep_accum = if params.sweep_out { 0. } else { 1. };
+    }
+
+    if params.sweep_out {
+        params.sweep_accum += time.delta_seconds() * 2.5;
+    } else {
+        params.sweep_accum -= time.delta_seconds() * 2.5;
+    }
+
+    for (mut ltl, gt) in query.iter_mut() {
+        let x = gt.translation().x / (1920. / 2.);
+        let x_r = (-x + params.sweep_accum).abs();
+        let x_l = (-x - params.sweep_accum).abs();
+        let lum_r = if x >= 0. && x > params.sweep_accum { 0. } else { (1. / (x_r * 7. + 0.8)).min(1.3) };
+        let lum_l = if x < 0. && x < -params.sweep_accum { 0. } else { (1. / (x_l * 7. + 0.8)).min(1.3) };
+
+        let lum = lum_r + lum_l;
+
+        ltl.color = colors.primary * lum + colors.secondary * (1. - lum) * 0.2;
+    }
+}
+
 
 pub async fn anim1(speed: f32) -> Result<(), AsyncFailure> {
     let tubes = world().query::<(&mut LedTubeLed, &GlobalTransform)>();
@@ -168,7 +214,7 @@ pub async fn anim1(speed: f32) -> Result<(), AsyncFailure> {
     Ok(())
 }
 
-pub async fn center_sweep_out(speed: f32, start_time: f32) -> Result<(), AsyncFailure> {
+pub async fn center_sweep_out_old(speed: f32, start_time: f32) -> Result<(), AsyncFailure> {
     let tubes = world().query::<(&mut LedTubeLed, &GlobalTransform)>();
     let time_resource = world().resource::<Time<Real>>();
     let anim_colors = world().resource::<AnimColors>();
