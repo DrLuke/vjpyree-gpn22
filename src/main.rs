@@ -31,6 +31,8 @@ use crate::propagating_render_layers::{PropagatingRenderLayersPlugin};
 use crate::render_main::RenderMainPlugin;
 use crate::traktor_beat::TraktorPlugin;
 
+#[derive(ScheduleLabel, Debug, Clone, PartialEq, Eq, Hash)]
+pub struct Clear;
 
 #[derive(ScheduleLabel, Debug, Clone, PartialEq, Eq, Hash)]
 pub struct GuiUpdate;
@@ -38,12 +40,25 @@ pub struct GuiUpdate;
 #[derive(ScheduleLabel, Debug, Clone, PartialEq, Eq, Hash)]
 pub struct MetaAnimUpdate;
 
+#[derive(ScheduleLabel, Debug, Clone, PartialEq, Eq, Hash)]
+pub struct AsyncUpdate1;
+
+#[derive(ScheduleLabel, Debug, Clone, PartialEq, Eq, Hash)]
+pub struct AsyncUpdate2;
+
+#[derive(ScheduleLabel, Debug, Clone, PartialEq, Eq, Hash)]
+pub struct AsyncUpdate3;
+
 fn main() {
     let mut app = App::new();
         app
         .add_plugins(DefaultPlugins)
         .add_plugins(EguiPlugin)
-        .add_plugins(AsyncPlugin::default_settings())
+        .add_plugins(AsyncPlugin::default_settings()
+            .run_in::<()>(AsyncUpdate1)
+            .run_in::<()>(AsyncUpdate2)
+            .run_in::<()>(AsyncUpdate3)
+        )
         .add_plugins(WorldInspectorPlugin::new())
         .insert_resource(RapierConfiguration {
             gravity: Vec3::Z * -9.81 * 100.,
@@ -67,6 +82,10 @@ fn main() {
         .add_systems(Startup, startup)
         .add_plugins(AnimPlugin);
 
+    app.init_schedule(Clear);
+    app.world.resource_mut::<MainScheduleOrder>()
+        .insert_after(First, Clear);
+
     app.init_schedule(GuiUpdate);
     app.world.resource_mut::<MainScheduleOrder>()
         .insert_after(PreUpdate, GuiUpdate);
@@ -74,6 +93,18 @@ fn main() {
     app.init_schedule(MetaAnimUpdate);
     app.world.resource_mut::<MainScheduleOrder>()
         .insert_after(GuiUpdate, MetaAnimUpdate);
+
+    app.init_schedule(AsyncUpdate1);
+    app.world.resource_mut::<MainScheduleOrder>()
+        .insert_after(Update, AsyncUpdate1);
+
+    app.init_schedule(AsyncUpdate2);
+    app.world.resource_mut::<MainScheduleOrder>()
+        .insert_after(AsyncUpdate1, AsyncUpdate2);
+
+    app.init_schedule(AsyncUpdate3);
+    app.world.resource_mut::<MainScheduleOrder>()
+        .insert_after(AsyncUpdate2, AsyncUpdate3);
 
     app.run();
 }
