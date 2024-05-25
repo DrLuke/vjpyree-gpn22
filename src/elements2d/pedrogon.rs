@@ -47,7 +47,7 @@ pub fn spawn_pedrogon(
                     HexagonDefinition::center(&hex).y - 1080. / 2.,
                     0.0,
                 ).with_rotation(Quat::from_rotation_z(PI / 6.)),
-                //visibility: Visibility::Hidden,
+                visibility: Visibility::Hidden,
                 ..default()
             },
             PropagatingRenderLayers { render_layers: RenderLayers::layer(3) },
