@@ -1,8 +1,9 @@
 pub mod zoomagon;
 pub mod render;
 pub mod tunnelgon;
+mod swirlagon;
 
-use bevy::app::App;
+use bevy::app::{App, PreUpdate};
 use bevy::core_pipeline::bloom::BloomSettings;
 use bevy::core_pipeline::core_2d::graph::Node2d::Tonemapping;
 use bevy::core_pipeline::tonemapping::Tonemapping::TonyMcMapface;
@@ -13,6 +14,7 @@ use bevy::render::view::RenderLayers;
 use bevy::sprite::Material2dPlugin;
 use bevy_defer::AsyncExtension;
 use crate::elements2d::render::Elements2dRendertarget;
+use crate::elements2d::swirlagon::{SetSwirlagonEvent, show_swirlagon_system, spawn_swirlagon};
 use crate::elements2d::tunnelgon::{CancelAnim, laser_animation_system, LaserAnimationEvent, ring_animation_system, RingAnimationEvent, SetTunnelgonEvent, spawn_tunnelgon_system, TunnelgonMaterial};
 use crate::elements2d::zoomagon::{spawn_zoomagon_system, SpawnZoomagonEvent, zoomagon_system};
 use crate::propagating_render_layers::PropagatingRenderLayers;
@@ -22,7 +24,7 @@ pub struct Elements2DPlugin;
 impl Plugin for Elements2DPlugin {
     fn build(&self, app: &mut App) {
         app.init_resource::<Elements2dRendertarget>();
-        app.add_systems(Startup, setup_elements_2d);
+        app.add_systems(Startup, (setup_elements_2d, spawn_swirlagon));
         app.add_event::<SpawnZoomagonEvent>();
         app.add_systems(Update, (spawn_zoomagon_system, zoomagon_system));
         app.add_event::<SetTunnelgonEvent>();
@@ -30,6 +32,8 @@ impl Plugin for Elements2DPlugin {
         app.add_event::<RingAnimationEvent>();
         app.add_plugins(Material2dPlugin::<TunnelgonMaterial>::default());
         app.add_systems(Update, (spawn_tunnelgon_system, laser_animation_system, ring_animation_system));
+        app.add_event::<SetSwirlagonEvent>();
+        app.add_systems(Update, (show_swirlagon_system));
     }
 }
 

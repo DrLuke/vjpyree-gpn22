@@ -10,6 +10,7 @@ pub mod traktor_beat;
 pub mod beat;
 pub mod anims;
 mod render_main;
+pub mod swirl;
 
 use bevy::app::MainScheduleOrder;
 use bevy::core::Zeroable;
@@ -29,6 +30,7 @@ use crate::hexagon::HexagonPlugin;
 use crate::physics_hexagon::PhysicsHexagonPlugin;
 use crate::propagating_render_layers::{PropagatingRenderLayersPlugin};
 use crate::render_main::RenderMainPlugin;
+use crate::swirl::SwirlPlugin;
 use crate::traktor_beat::TraktorPlugin;
 
 #[derive(ScheduleLabel, Debug, Clone, PartialEq, Eq, Hash)]
@@ -51,7 +53,7 @@ pub struct AsyncUpdate3;
 
 fn main() {
     let mut app = App::new();
-        app
+    app
         .add_plugins(DefaultPlugins)
         .add_plugins(EguiPlugin)
         .add_plugins(AsyncPlugin::default_settings()
@@ -80,7 +82,10 @@ fn main() {
             OscBeatReceiverPlugin::default(),
         ))
         .add_systems(Startup, startup)
-        .add_plugins(AnimPlugin);
+        .add_plugins(AnimPlugin)
+        .add_plugins(SwirlPlugin)
+    ;
+
 
     app.init_schedule(Clear);
     app.world.resource_mut::<MainScheduleOrder>()
