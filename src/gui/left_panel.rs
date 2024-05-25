@@ -175,6 +175,9 @@ pub fn left_panel(
                 beat_controls_params.beat_mute.mute = false;
             }
 
+            // ----------------------------------------------
+            // Swirl controls
+
             ui.separator();
             ui.heading("Swirl");
 
