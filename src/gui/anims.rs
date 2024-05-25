@@ -51,6 +51,9 @@ impl TubesAnim<'_> {
     fn load_storage(&mut self, storage: TubesAnimStorage) {
         self.wave.wave = storage.wave;
         self.wave.punch = storage.punch;
+        self.wave.punch2 = storage.punch2;
+        self.wave.punch3 = storage.punch3;
+        self.wave.punch4 = storage.punch4;
         self.wave.sweep_out = storage.sweep_out;
         self.wave.sweep_in = storage.sweep_in;
     }
@@ -60,6 +63,9 @@ impl TubesAnim<'_> {
 pub struct TubesAnimStorage {
     wave: usize,
     punch: bool,
+    punch2: bool,
+    punch3: bool,
+    punch4: bool,
     sweep_out: bool,
     sweep_in: bool,
 }
@@ -132,16 +138,24 @@ pub fn anim_gui(
                tubes_button(ui, button_width, button_height, &mut settings.tubes.wave, 2, "Wave In");
             });
             ui.horizontal(|ui| {
-                tubes_button(ui, button_width, button_height, &mut settings.tubes.wave, 3, "??");
-                tubes_button(ui, button_width, button_height, &mut settings.tubes.wave, 4, "??");
+                tubes_button(ui, button_width, button_height, &mut settings.tubes.wave, 3, "Blocky out");
+                tubes_button(ui, button_width, button_height, &mut settings.tubes.wave, 4, "Blocky in");
+            });
+            ui.horizontal(|ui| {
+                tubes_button(ui, button_width, button_height, &mut settings.tubes.wave, 5, "Noise 1");
+                tubes_button(ui, button_width, button_height, &mut settings.tubes.wave, 6, "Noise 2");
             });
             ui.horizontal(|ui| {
                 tubes_button(ui, button_width, button_height, &mut settings.tubes.wave, 0, "Wave Off");
-                anim_button(ui, button_width, button_height, &mut settings.tubes.punch, "Punch");
+                anim_button(ui, button_width, button_height, &mut settings.tubes.punch, "Punch1");
             });
             ui.horizontal(|ui| {
                 anim_button(ui, button_width, button_height, &mut settings.tubes.sweep_out, "Sweep out");
-                anim_button(ui, button_width, button_height, &mut settings.tubes.sweep_in, "Sweep in");
+                anim_button(ui, button_width, button_height, &mut settings.tubes.punch2, "Punch2");
+            });
+            ui.horizontal(|ui| {
+                anim_button(ui, button_width, button_height, &mut settings.tubes.punch3, "Punch3");
+                anim_button(ui, button_width, button_height, &mut settings.tubes.punch4, "Punch4");
             });
 
 
