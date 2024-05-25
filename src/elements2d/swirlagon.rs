@@ -4,6 +4,7 @@ use bevy::prelude::{ColorMaterial, Commands, Event, Mesh, ResMut};
 use bevy::sprite::{Material2d, MaterialMesh2dBundle, Mesh2dHandle};
 use crate::hexagon::HexagonDefinition;
 use bevy::prelude::*;
+use bevy::render::render_resource::{AsBindGroup, ShaderRef};
 use bevy::render::view::RenderLayers;
 use crate::elements2d::tunnelgon::{TunnelgonMaterial, TunnelgonParams};
 use crate::propagating_render_layers::PropagatingRenderLayers;
@@ -19,10 +20,23 @@ pub struct SetSwirlagonEvent {
     pub affected_hexagons: Vec<HexagonDefinition>,
 }
 
+#[derive(Asset, TypePath, AsBindGroup, Debug, Clone)]
+pub struct SwirlagonRenderMaterial {
+    #[texture(0)]
+    #[sampler(1)]
+    tex: Handle<Image>,
+}
+
+impl Material2d for SwirlagonRenderMaterial {
+    fn fragment_shader() -> ShaderRef {
+        "shaders/swirlagon.wgsl".into()
+    }
+}
+
 pub fn spawn_swirlagon(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
-    mut materials: ResMut<Assets<ColorMaterial>>,
+    mut materials: ResMut<Assets<SwirlagonRenderMaterial>>,
     swirl_rt: Res<SwirlRenderTarget>,
 ) {
     for hex in vec![HexagonDefinition::A1, HexagonDefinition::A2, HexagonDefinition::A3,
@@ -33,9 +47,8 @@ pub fn spawn_swirlagon(
         commands.spawn((
             MaterialMesh2dBundle {
                 mesh,
-                material: materials.add(ColorMaterial {
-                    texture: Some(swirl_rt.render_target.clone()),
-                    ..default()
+                material: materials.add(SwirlagonRenderMaterial {
+                    tex: swirl_rt.render_target.clone(),
                 }),
                 transform: Transform::from_xyz(
                     // Distribute shapes from -X_EXTENT to +X_EXTENT.

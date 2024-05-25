@@ -12,6 +12,10 @@ use egui_plot::{Line, Plot, PlotBounds, PlotPoints};
 use rand::{Rng, thread_rng};
 use crate::beat::BeatEvent;
 use crate::beat::bpm_guesser::BpmGuesser;
+use crate::elements2d::pedrogon::SetPedrogonEvent;
+use crate::elements2d::swirlagon::SetSwirlagonEvent;
+use crate::elements2d::tunnelgon::SetTunnelgonEvent;
+use crate::hexagon::HexagonDefinition;
 use crate::propagating_render_layers::PropagatingRenderLayers;
 use crate::swirl::SwirlAutomation;
 use crate::traktor_beat::TraktorBeat;
@@ -44,7 +48,12 @@ pub struct BeatControlsParams<'w, 's> {
 
 #[derive(Default)]
 pub struct NextSettings {
+    swirl_next_beat: bool,
     swirl_preset: usize,
+    gons_next_beat: bool,
+    tunnelgon: Vec<HexagonDefinition>,
+    swirlgon: Vec<HexagonDefinition>,
+    pedrogon: Vec<HexagonDefinition>,
 }
 
 pub fn left_panel(
@@ -53,6 +62,12 @@ pub fn left_panel(
     mut beat_controls_params: BeatControlsParams,
     mut swirl: ResMut<SwirlAutomation>,
     mut next_settings: Local<NextSettings>,
+    mut tunnelgon_reader: Local<ManualEventReader<SetTunnelgonEvent>>,
+    mut tunnelgon_events: ResMut<Events<SetTunnelgonEvent>>,
+    mut swirlgon_reader: Local<ManualEventReader<SetSwirlagonEvent>>,
+    mut swirlgon_events: ResMut<Events<SetSwirlagonEvent>>,
+    mut pedrogon_reader: Local<ManualEventReader<SetPedrogonEvent>>,
+    mut pedrogon_events: ResMut<Events<SetPedrogonEvent>>,
 ) {
     let ctx = contexts.ctx_mut();
 
@@ -60,7 +75,6 @@ pub fn left_panel(
         .resizable(false)
         .default_width(300.)
         .show(ctx, |ui| {
-
             let is_beat = beat_controls_params.beat_reader.read(&beat_controls_params.beat_events).len() > 0;
 
 
@@ -184,6 +198,7 @@ pub fn left_panel(
             ui.horizontal(|ui| {
                 ui.checkbox(&mut swirl.fix_pal, "Fix Palette");
                 ui.checkbox(&mut swirl.fix_fb_rot, "Fix FB rot");
+                ui.checkbox(&mut next_settings.swirl_next_beat, "Set on beat")
             });
 
             ui.horizontal(|ui| {
@@ -205,8 +220,66 @@ pub fn left_panel(
                 };
             });
 
+            // ----------------------------------------------
+            // X-GON SELECT
+            // Read changed from external
+            ui.separator();
+            ui.heading("Gons");
+            for ev in tunnelgon_reader.read(&tunnelgon_events) {
+                next_settings.tunnelgon = ev.affected_hexagons.clone();
+            }
+            for ev in swirlgon_reader.read(&swirlgon_events) {
+                next_settings.swirlgon = ev.affected_hexagons.clone();
+            }
+            for ev in pedrogon_reader.read(&pedrogon_events) {
+                next_settings.pedrogon = ev.affected_hexagons.clone();
+            }
+
+            for hex in vec![HexagonDefinition::A1, HexagonDefinition::A2, HexagonDefinition::A3,
+                            HexagonDefinition::B1, HexagonDefinition::B2, HexagonDefinition::B3] {
+                ui.horizontal(|ui| {
+                    ui.label(format!("{:?}", hex));
+                    if ui.add_sized([80., 30.], egui::SelectableLabel::new(next_settings.tunnelgon.contains(&hex), "Tunnelgon"))
+                        .clicked() {
+                        insert_hex_to_vec(&mut next_settings.tunnelgon, &hex);
+                        remove_hex_from_vec(&mut next_settings.swirlgon, &hex);
+                        remove_hex_from_vec(&mut next_settings.pedrogon, &hex);
+                    };
+                    if ui.add_sized([80., 30.], egui::SelectableLabel::new(next_settings.swirlgon.contains(&hex), "Swirlgon"))
+                        .clicked() {
+                        insert_hex_to_vec(&mut next_settings.swirlgon, &hex);
+                        remove_hex_from_vec(&mut next_settings.tunnelgon, &hex);
+                        remove_hex_from_vec(&mut next_settings.pedrogon, &hex);
+                    };
+                    if ui.add_sized([80., 30.], egui::SelectableLabel::new(next_settings.pedrogon.contains(&hex), "Pedrogon"))
+                        .clicked() {
+                        insert_hex_to_vec(&mut next_settings.pedrogon, &hex);
+                        remove_hex_from_vec(&mut next_settings.swirlgon, &hex);
+                        remove_hex_from_vec(&mut next_settings.tunnelgon, &hex);
+                    };
+                });
+            }
+            if ui.button("Set").clicked() {
+                next_settings.gons_next_beat = true;
+            }
+
             if is_beat {
-                swirl.preset = next_settings.swirl_preset
+                if next_settings.swirl_next_beat {
+                    swirl.preset = next_settings.swirl_preset;
+                }
+
+                if next_settings.gons_next_beat {
+                    tunnelgon_events.send(SetTunnelgonEvent {
+                        affected_hexagons: next_settings.tunnelgon.clone()
+                    });
+                    swirlgon_events.send(SetSwirlagonEvent {
+                        affected_hexagons: next_settings.swirlgon.clone()
+                    });
+                    pedrogon_events.send(SetPedrogonEvent {
+                        affected_hexagons: next_settings.pedrogon.clone()
+                    });
+                    next_settings.gons_next_beat = false;
+                }
             }
 
             // ----------------------------------------------
@@ -220,4 +293,14 @@ fn swirl_preset_button(ui: &mut Ui, preset: &mut usize, index: usize, text: impl
         .clicked() {
         *preset = index;
     };
+}
+
+fn insert_hex_to_vec(vec: &mut Vec<HexagonDefinition>, hex: &HexagonDefinition) {
+    if !vec.contains(hex) {
+        vec.push(*hex);
+    }
+}
+
+fn remove_hex_from_vec(vec: &mut Vec<HexagonDefinition>, hex: &HexagonDefinition) {
+    *vec = vec.iter().filter(|h| *hex != **h).cloned().collect();
 }

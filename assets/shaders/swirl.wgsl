@@ -158,8 +158,8 @@ fn mask_func(uvc: vec2<f32>, hex: f32, circle: f32, roundedx: f32, roundedx_radi
 {
     var o = 0.;
     o += edge(sdHexagon(uvc*rot2(PI/6.), hex/3.), thiccness);
-    o += edge(sdCircle(uvc, circle*0.4), thiccness);
-    o += edge(sdRoundedX(uvc*rot2(PI/12.), roundedx*0.5, roundedx_radius*0.2), thiccness);
+    o += edge(sdCircle(uvc, circle*0.4), thiccness)*2.;
+    o += edge(sdRoundedX(uvc*rot2(PI/12.), roundedx*0.5, roundedx_radius*0.2), thiccness)*3.;
     return o;
 }
 
