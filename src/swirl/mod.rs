@@ -108,9 +108,9 @@ pub struct SwirlRandPreset {
 
 #[derive(Resource, Default, Clone)]
 pub struct SwirlAutomation {
-    preset: usize,
-    fix_fb_rot: bool,
-    fix_pal: bool,
+    pub preset: usize,
+    pub fix_fb_rot: bool,
+    pub fix_pal: bool,
 }
 
 pub fn swirl_beat(
@@ -191,6 +191,13 @@ pub fn swirl_beat(
                 //fb_rot: 0.5,
                 uv_scale: 1.01,
                 col_rot: Color::rgba(0.000, 0.268, 1.000, 1.000),
+                fb_strength: 0.56,
+            },
+            SwirlRandPreset { // Red Pixelstorm
+                offset_strength: 7.44,
+                //fb_rot: 0.5,
+                uv_scale: 1.01,
+                col_rot: Color::rgba(1.000, 0.268, 0., 1.000),
                 fb_strength: 0.56,
             },
         ];

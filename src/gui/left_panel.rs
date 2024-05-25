@@ -7,10 +7,13 @@ use bevy::render::camera::{RenderTarget, ScalingMode};
 use bevy::render::view::RenderLayers;
 use bevy::window::{PresentMode, WindowRef, WindowResolution};
 use bevy_egui::{egui, EguiContexts};
+use bevy_egui::egui::{Ui, WidgetText};
 use egui_plot::{Line, Plot, PlotBounds, PlotPoints};
+use rand::{Rng, thread_rng};
 use crate::beat::BeatEvent;
 use crate::beat::bpm_guesser::BpmGuesser;
 use crate::propagating_render_layers::PropagatingRenderLayers;
+use crate::swirl::SwirlAutomation;
 use crate::traktor_beat::TraktorBeat;
 
 
@@ -39,10 +42,17 @@ pub struct BeatControlsParams<'w, 's> {
     plot_bounds: Local<'s, BpmPlotBounds>,
 }
 
+#[derive(Default)]
+pub struct NextSettings {
+    swirl_preset: usize,
+}
+
 pub fn left_panel(
     mut contexts: EguiContexts,
     mut commands: Commands,
     mut beat_controls_params: BeatControlsParams,
+    mut swirl: ResMut<SwirlAutomation>,
+    mut next_settings: Local<NextSettings>,
 ) {
     let ctx = contexts.ctx_mut();
 
@@ -50,6 +60,9 @@ pub fn left_panel(
         .resizable(false)
         .default_width(300.)
         .show(ctx, |ui| {
+
+            let is_beat = beat_controls_params.beat_reader.read(&beat_controls_params.beat_events).len() > 0;
+
 
             ui.heading("App Controls");
             ui.separator();
@@ -99,7 +112,7 @@ pub fn left_panel(
 
             ui.horizontal(|ui| {
                 ui.label("Beat: ");
-                if beat_controls_params.beat_reader.read(&beat_controls_params.beat_events).len() > 0 {
+                if is_beat {
                     ui.label("BEAT");
                 }
             });
@@ -162,8 +175,46 @@ pub fn left_panel(
                 beat_controls_params.beat_mute.mute = false;
             }
 
+            ui.separator();
+            ui.heading("Swirl");
+
+            ui.horizontal(|ui| {
+                ui.checkbox(&mut swirl.fix_pal, "Fix Palette");
+                ui.checkbox(&mut swirl.fix_fb_rot, "Fix FB rot");
+            });
+
+            ui.horizontal(|ui| {
+                swirl_preset_button(ui, &mut next_settings.swirl_preset, 0, "Green Portal");
+                swirl_preset_button(ui, &mut next_settings.swirl_preset, 1, "Blur out");
+                swirl_preset_button(ui, &mut next_settings.swirl_preset, 2, "Rainbow out");
+            });
+            ui.horizontal(|ui| {
+                swirl_preset_button(ui, &mut next_settings.swirl_preset, 3, "Fractal 1");
+                swirl_preset_button(ui, &mut next_settings.swirl_preset, 4, "Fractal 2");
+                swirl_preset_button(ui, &mut next_settings.swirl_preset, 5, "Fractal 3");
+            });
+            ui.horizontal(|ui| {
+                swirl_preset_button(ui, &mut next_settings.swirl_preset, 6, "Blue");
+                swirl_preset_button(ui, &mut next_settings.swirl_preset, 7, "Red");
+                if ui.add_sized([80., 30.], egui::Button::new("Random")).clicked() {
+                    let mut rng = thread_rng();
+                    next_settings.swirl_preset = rng.gen_range(0..=7)
+                };
+            });
+
+            if is_beat {
+                swirl.preset = next_settings.swirl_preset
+            }
+
             // ----------------------------------------------
 
             ui.allocate_rect(ui.available_rect_before_wrap(), egui::Sense::hover());
         });
+}
+
+fn swirl_preset_button(ui: &mut Ui, preset: &mut usize, index: usize, text: impl Into<WidgetText>) {
+    if ui.add_sized([80., 30.], egui::SelectableLabel::new(*preset == index, text))
+        .clicked() {
+        *preset = index;
+    };
 }
