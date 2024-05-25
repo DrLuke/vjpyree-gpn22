@@ -152,7 +152,7 @@ pub fn tunnelgon_laser_sweep_anim(
 
         let ind = indices[params.counter];
         laser_writer.send(LaserAnimationEvent {
-            affected_hexagons: vec![HexagonDefinition::A1, HexagonDefinition::A2, HexagonDefinition::A3, HexagonDefinition::B1, HexagonDefinition::B2, HexagonDefinition::B3],
+            affected_hexagons: vec![HexagonDefinition::A1, HexagonDefinition::A2, HexagonDefinition::A3, HexagonDefinition::B1, HexagonDefinition::B2, HexagonDefinition::B3, HexagonDefinition::Main],
             base_anim: Pulse,
             indices: vec![ind.0, ind.1],
             values: vec![1., 1.],
@@ -176,7 +176,7 @@ pub fn tunnelgon_rings_ftb_meta_anim(
     if !params.enabled { return; }
     for _ in beat_reader.read() {
         ring_writer.send(RingAnimationEvent {
-            affected_hexagons: vec![HexagonDefinition::A1, HexagonDefinition::A2, HexagonDefinition::A3, HexagonDefinition::B1, HexagonDefinition::B2, HexagonDefinition::B3],
+            affected_hexagons: vec![HexagonDefinition::A1, HexagonDefinition::A2, HexagonDefinition::A3, HexagonDefinition::B1, HexagonDefinition::B2, HexagonDefinition::B3, HexagonDefinition::Main],
             base_pos_anim: RingBasePosAnim::SlideLinear,
             base_val_anim: RingBaseValAnim::Pulse,
             indices: vec![params.counter],
@@ -202,7 +202,7 @@ pub fn tunnelgon_rings_btf_meta_anim(
     if !params.enabled { return; }
     for _ in beat_reader.read() {
         ring_writer.send(RingAnimationEvent {
-            affected_hexagons: vec![HexagonDefinition::A1, HexagonDefinition::A2, HexagonDefinition::A3, HexagonDefinition::B1, HexagonDefinition::B2, HexagonDefinition::B3],
+            affected_hexagons: vec![HexagonDefinition::A1, HexagonDefinition::A2, HexagonDefinition::A3, HexagonDefinition::B1, HexagonDefinition::B2, HexagonDefinition::B3, HexagonDefinition::Main],
             base_pos_anim: RingBasePosAnim::SlideLinear,
             base_val_anim: RingBaseValAnim::Pulse,
             indices: vec![params.counter + 2],
@@ -234,6 +234,7 @@ pub fn tunnelgon_ring_train_meta_anim(
                 HexagonDefinition::B1,
                 HexagonDefinition::B2,
                 HexagonDefinition::B3,
+                HexagonDefinition::Main,
             ],
             base_pos_anim: RingBasePosAnim::SlideLinear,
             base_val_anim: RingBaseValAnim::Pulse,

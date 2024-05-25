@@ -16,6 +16,7 @@ use crate::elements2d::pedrogon::SetPedrogonEvent;
 use crate::elements2d::swirlagon::SetSwirlagonEvent;
 use crate::elements2d::tunnelgon::SetTunnelgonEvent;
 use crate::hexagon::HexagonDefinition;
+use crate::hexagon::HexagonDefinition::Main;
 use crate::propagating_render_layers::PropagatingRenderLayers;
 use crate::swirl::SwirlAutomation;
 use crate::traktor_beat::TraktorBeat;
@@ -236,27 +237,34 @@ pub fn left_panel(
             }
 
             for hex in vec![HexagonDefinition::A1, HexagonDefinition::A2, HexagonDefinition::A3,
-                            HexagonDefinition::B1, HexagonDefinition::B2, HexagonDefinition::B3] {
+                            HexagonDefinition::B1, HexagonDefinition::B2, HexagonDefinition::B3, HexagonDefinition::Main] {
                 ui.horizontal(|ui| {
                     ui.label(format!("{:?}", hex));
-                    if ui.add_sized([80., 30.], egui::SelectableLabel::new(next_settings.tunnelgon.contains(&hex), "Tunnelgon"))
+                    if ui.add_sized([60., 30.], egui::SelectableLabel::new(next_settings.tunnelgon.contains(&hex), "Tunnelgon"))
                         .clicked() {
                         insert_hex_to_vec(&mut next_settings.tunnelgon, &hex);
                         remove_hex_from_vec(&mut next_settings.swirlgon, &hex);
                         remove_hex_from_vec(&mut next_settings.pedrogon, &hex);
                     };
-                    if ui.add_sized([80., 30.], egui::SelectableLabel::new(next_settings.swirlgon.contains(&hex), "Swirlgon"))
+                    if ui.add_sized([60., 30.], egui::SelectableLabel::new(next_settings.swirlgon.contains(&hex), "Swirlgon"))
                         .clicked() {
                         insert_hex_to_vec(&mut next_settings.swirlgon, &hex);
                         remove_hex_from_vec(&mut next_settings.tunnelgon, &hex);
                         remove_hex_from_vec(&mut next_settings.pedrogon, &hex);
                     };
-                    if ui.add_sized([80., 30.], egui::SelectableLabel::new(next_settings.pedrogon.contains(&hex), "Pedrogon"))
+                    if ui.add_sized([60., 30.], egui::SelectableLabel::new(next_settings.pedrogon.contains(&hex), "Pedrogon"))
                         .clicked() {
                         insert_hex_to_vec(&mut next_settings.pedrogon, &hex);
                         remove_hex_from_vec(&mut next_settings.swirlgon, &hex);
                         remove_hex_from_vec(&mut next_settings.tunnelgon, &hex);
                     };
+                    if hex == HexagonDefinition::Main {
+                        if ui.button("Off").clicked() {
+                            remove_hex_from_vec(&mut next_settings.pedrogon, &hex);
+                            remove_hex_from_vec(&mut next_settings.swirlgon, &hex);
+                            remove_hex_from_vec(&mut next_settings.tunnelgon, &hex);
+                        }
+                    }
                 });
             }
             if ui.button("Set").clicked() {

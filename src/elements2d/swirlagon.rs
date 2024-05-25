@@ -40,7 +40,7 @@ pub fn spawn_swirlagon(
     swirl_rt: Res<SwirlRenderTarget>,
 ) {
     for hex in vec![HexagonDefinition::A1, HexagonDefinition::A2, HexagonDefinition::A3,
-                    HexagonDefinition::B1, HexagonDefinition::B2, HexagonDefinition::B3] {
+                    HexagonDefinition::B1, HexagonDefinition::B2, HexagonDefinition::B3, HexagonDefinition::Main] {
         let mesh = Mesh2dHandle(meshes.add(
             RegularPolygon::new(HexagonDefinition::size(&hex).x / 2., 6)
         ));
