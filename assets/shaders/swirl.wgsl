@@ -18,6 +18,8 @@ struct SwirlParams {
     cross: f32,
     cross_radius: f32,
     thiccness: f32,
+    fb_strength: f32,
+    palette: f32,
 }
 
 const PI: f32 = 3.14159;
@@ -179,8 +181,10 @@ fn fragment(mesh: VertexOutput) -> @location(0) vec4<f32> {
     // SDF mask
     let mask = mask_func(uvc, params.hex, params.circle, params.cross, params.cross_radius, params.thiccness);
 
-    let col = palette2(mask*0.4 + length(uvc));
+    let col = pal(params.palette, mask*0.4 + length(uvc)*10.);
+    //let col = vec3<f32>(1.);
     fb_sample = vec4<f32>(fb_sample.rgb*rot3(params.col_rot.xyz, params.col_rot.w), fb_sample.a);
+    fb_sample = clamp(fb_sample, vec4<f32>(0.), vec4<f32>(1.4));
 
-    return vec4<f32>(col*step(0.3, mask), 1.) + fb_sample*0.49 * (1.-step(0.3, mask));
+    return vec4<f32>(col*step(0.3, mask), 1.) + fb_sample*params.fb_strength * (1.-step(0.3, mask));
 }

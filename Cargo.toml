@@ -17,6 +17,7 @@ bevy_defer = "0.10.0"
 bevy_rosc = "0.7.0"
 rosc = "0.9.2"
 futures = "0.3.30"
+rand = "0.9.0-alpha.1"
 
 [profile.dev.package."*"]
 opt-level = 3

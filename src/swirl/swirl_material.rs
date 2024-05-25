@@ -15,6 +15,8 @@ pub struct SwirlParams {
     pub cross: f32,
     pub cross_radius: f32,
     pub thiccness: f32,
+    pub fb_strength: f32,
+    pub palette: f32,
 }
 
 impl Default for SwirlParams {
@@ -28,7 +30,9 @@ impl Default for SwirlParams {
             circle: 0.3,
             cross: 0.4,
             cross_radius: 0.5,
-            thiccness: 0.2,
+            thiccness: 0.05,
+            fb_strength: 0.3,
+            palette: 1.,
         }
     }
 }
