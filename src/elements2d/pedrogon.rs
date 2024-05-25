@@ -5,26 +5,30 @@ use bevy::sprite::{Material2d, MaterialMesh2dBundle, Mesh2dHandle};
 use crate::hexagon::HexagonDefinition;
 use bevy::prelude::*;
 use bevy::render::view::RenderLayers;
+use vleue_kinetoscope::{AnimatedGif, AnimatedGifController};
 use crate::elements2d::tunnelgon::{TunnelgonMaterial, TunnelgonParams};
 use crate::propagating_render_layers::PropagatingRenderLayers;
 use crate::swirl::render_target::SwirlRenderTarget;
 
 #[derive(Component)]
-pub struct Swirlagon {
+pub struct Pedrogon {
     hexagon_definition: HexagonDefinition,
 }
 
 #[derive(Event)]
-pub struct SetSwirlagonEvent {
+pub struct SetPedrogonEvent {
     pub affected_hexagons: Vec<HexagonDefinition>,
 }
 
-pub fn spawn_swirlagon(
+pub fn spawn_pedrogon(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<ColorMaterial>>,
-    swirl_rt: Res<SwirlRenderTarget>,
+    asset_server: Res<AssetServer>
 ) {
+    let gif_asset: Handle<AnimatedGif> = asset_server.load("pedro.gif");
+
+
     for hex in vec![HexagonDefinition::A1, HexagonDefinition::A2, HexagonDefinition::A3,
                     HexagonDefinition::B1, HexagonDefinition::B2, HexagonDefinition::B3] {
         let mesh = Mesh2dHandle(meshes.add(
@@ -34,7 +38,7 @@ pub fn spawn_swirlagon(
             MaterialMesh2dBundle {
                 mesh,
                 material: materials.add(ColorMaterial {
-                    texture: Some(swirl_rt.render_target.clone()),
+                    texture: None, //TODO
                     ..default()
                 }),
                 transform: Transform::from_xyz(
@@ -43,18 +47,31 @@ pub fn spawn_swirlagon(
                     HexagonDefinition::center(&hex).y - 1080. / 2.,
                     0.0,
                 ).with_rotation(Quat::from_rotation_z(PI / 6.)),
-                visibility: Visibility::Hidden,
+                //visibility: Visibility::Hidden,
                 ..default()
             },
             PropagatingRenderLayers { render_layers: RenderLayers::layer(3) },
-            Swirlagon { hexagon_definition: hex },
+            Pedrogon { hexagon_definition: hex },
+            gif_asset.clone(),
+            AnimatedGifController::default(),
+            Handle::<Image>::default(),
         ));
     }
 }
 
-pub fn show_swirlagon_system(
-    mut query: Query<(&Swirlagon, &mut Visibility)>,
-    mut ev_reader: EventReader<SetSwirlagonEvent>,
+pub fn update_pedrogon(
+    mut query: Query<(&Handle<ColorMaterial>, &Handle<Image>), (With<Pedrogon>, Changed<Handle<Image>>)>,
+    mut materials: ResMut<Assets<ColorMaterial>>,
+) {
+    for (m_h, i_h) in query.iter() {
+        let mat = materials.get_mut(&(*m_h)).unwrap();
+        mat.texture = Some(i_h.clone());
+    }
+}
+
+pub fn show_pedrogon(
+    mut query: Query<(&Pedrogon, &mut Visibility)>,
+    mut ev_reader: EventReader<SetPedrogonEvent>,
 ) {
     for ev in ev_reader.read() {
         for (sw, mut vis) in query.iter_mut() {

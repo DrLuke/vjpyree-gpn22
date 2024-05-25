@@ -21,6 +21,7 @@ use bevy_egui::EguiPlugin;
 use bevy_inspector_egui::quick::WorldInspectorPlugin;
 use bevy_rapier3d::prelude::*;
 use bevy_rosc::BevyRoscPlugin;
+use vleue_kinetoscope::AnimatedGifPlugin;
 use crate::anims::AnimPlugin;
 use crate::parameter_animation::ParameterAnimationPlugin;
 use crate::beat::OscBeatReceiverPlugin;
@@ -84,6 +85,7 @@ fn main() {
         .add_systems(Startup, startup)
         .add_plugins(AnimPlugin)
         .add_plugins(SwirlPlugin)
+        .add_plugins(AnimatedGifPlugin);
     ;
 
 
