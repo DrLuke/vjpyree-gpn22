@@ -49,6 +49,8 @@ pub fn effectors_gui(
             ui.add(egui::DragValue::new(&mut dir_push_event.dir).speed(0.01).clamp_range(0.0..=PI * 2.));
         });
 
+        ui.add(egui::DragValue::new(&mut settings.eye_count).speed(1).clamp_range(0..=30));
+
         egui::ComboBox::from_label("Eyes mode")
             .selected_text(format!("{:?}", settings.eyes_mode))
             .show_ui(ui, |ui| {

@@ -1,16 +1,18 @@
 //! Effects for physics objects spawned into hexagons, like pulling to center or dispersing
 
 use bevy::app::{App, Update};
-use bevy::prelude::{Plugin, Resource};
+use bevy::prelude::{Entity, Plugin, Resource};
 use crate::physics_hexagon::effectors::center_pull::{center_pull_system, CenterPullEvent};
 use crate::physics_hexagon::effectors::center_push::{center_push_system, CenterPushEvent};
 use crate::physics_hexagon::effectors::dir_push::{dir_push_system, DirPushEvent};
 use crate::physics_hexagon::effectors::eyes_mode::eyes_mode;
+use crate::physics_hexagon::effectors::spawners::spawners_eyes;
 
 pub mod center_pull;
 pub mod center_push;
 pub mod dir_push;
 mod eyes_mode;
+mod spawners;
 
 pub struct EffectorsPlugin;
 
@@ -19,7 +21,7 @@ impl Plugin for EffectorsPlugin {
         app.add_event::<CenterPullEvent>();
         app.add_event::<CenterPushEvent>();
         app.add_event::<DirPushEvent>();
-        app.add_systems(Update, (center_pull_system, center_push_system, dir_push_system, eyes_mode));
+        app.add_systems(Update, (center_pull_system, center_push_system, dir_push_system, eyes_mode, spawners_eyes));
         app.insert_resource(PhysHexSettings::default());
     }
 }

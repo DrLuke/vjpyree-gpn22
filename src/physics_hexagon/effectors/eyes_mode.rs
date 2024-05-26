@@ -41,10 +41,19 @@ pub fn eyes_mode(
                     let target = p_t.to_scale_rotation_translation().1.inverse();
                     let diff_quat = target * current.inverse();
                     let diff_angle = target.angle_between(current);
+                    if diff_angle < 0.01 {
+                        continue;
+                    }
 
                     let u_diff = (diff_angle) * (time.delta_seconds()/(0.5+time.delta_seconds()));
 
-                    t.rotation = t.rotation.lerp(diff_quat * current, u_diff/diff_angle);
+                    let lerp_fac = u_diff/diff_angle;
+                    if lerp_fac.abs() < 0.01 {
+                        t.rotation = target;
+                    } else {
+                        t.rotation = t.rotation.lerp(diff_quat * current, u_diff/diff_angle);
+                    }
+
                 }
             }
         }

@@ -148,39 +148,6 @@ fn spawn_physics_hexagon(
     commands.entity(hexagon_geometry).push_children(&hexagon_elements);
     commands.entity(hexagon_entity).push_children(&[hexagon_geometry]);
 
-    let eye_01: Handle<Mesh> = asset_server.load("eye_01.glb#Mesh0/Primitive0");
-    let eye_01_material: Handle<StandardMaterial> = asset_server.load("eye_01.glb#Material0");
-
-    for n in 1..10 {
-        let entity = commands.spawn((
-            SpatialBundle {
-                transform: Transform::from_xyz(
-                    0.,
-                    n.clone() as f32,
-                    100. + n as f32 * 100.),
-                ..default()
-            },
-            HexagonPhysicsElement,
-            RigidBody::Dynamic,
-            Ccd::enabled(),
-            Collider::ball(50.),
-            PropagatingRenderLayers { render_layers: RenderLayers::layer(1) },
-        )).id();
-
-        let eye_mesh = commands.spawn((
-            PbrBundle {
-                mesh: eye_01.clone(),
-                material: eye_01_material.clone(),
-                transform: Transform::from_scale(Vec3::new(4000., 4000., 4000.)),
-                ..default()
-            }
-        )).id();
-        commands.entity(hexagon_entity).push_children(&[entity]);
-        commands.entity(entity).push_children(&[
-            eye_mesh
-        ]);
-    }
-
     /*commands
         .spawn((PointLightBundle {
             transform: Transform::from_xyz(hexagon_definition.center().x - 1920. / 2., hexagon_definition.center().y - 1080. / 2., 100.0),
