@@ -118,7 +118,7 @@ fn spawn_debug_led_tube_leds(
     query: Query<(Entity, &GlobalTransform), Added<LedTubeLed>>,
 ) {
     let mesh = Mesh2dHandle(meshes.add(
-        Rectangle { half_size: Vec2::splat(5.)}
+        Rectangle { half_size: Vec2::splat(5.5)}
     ));
 
     for (entity, global_transform) in query.iter() {

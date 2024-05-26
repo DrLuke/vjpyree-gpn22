@@ -5,7 +5,7 @@ use bevy::utils::default;
 use strum_macros::EnumIter;
 use crate::parameter_animation::Pt1Anim;
 
-pub const TUBE_LENGTH: f32 = 173.;
+pub const TUBE_LENGTH: f32 = 170.;
 pub const LEDS_COUNT: isize = 16;
 
 #[derive(Copy, Clone, EnumIter, Eq, PartialEq, Debug)]
@@ -54,10 +54,10 @@ impl TubeIndex {
             TubeIndex::Five => { Vec2 { x: 479., y: 540. } } // ✅
 
             // Main Diagonals left
-            TubeIndex::Six => { Vec2 { x: 621.5, y: 623. } } // ✅
-            TubeIndex::Seven => { Vec2 { x: 621.5, y: 457. } } // ✅
-            TubeIndex::Eight => { Vec2 { x: 720., y: 790. } } // ✅ X EYEBALLED
-            TubeIndex::Nine => { Vec2 { x: 720., y: 290. } } // ✅ X EYEBALLED
+            TubeIndex::Six => { Vec2 { x: 621.5 +5., y: 623.+5. } } // ✅
+            TubeIndex::Seven => { Vec2 { x: 621.5+6., y: 457.-4. } } // ✅
+            TubeIndex::Eight => { Vec2 { x: 720.-3., y: 790.-5. } } // ✅ X EYEBALLED
+            TubeIndex::Nine => { Vec2 { x: 720.-2., y: 290.+5. } } // ✅ X EYEBALLED
 
             // Main Horizontals
             TubeIndex::Ten => { Vec2 { x: 868.75, y: 873. } } // ✅
@@ -66,10 +66,10 @@ impl TubeIndex {
             TubeIndex::Thirteen => { Vec2 { x: 1051.25, y: 207. } } // ✅
 
             // Main Diagonals right
-            TubeIndex::Fourteen => { Vec2 { x: 1200., y: 790. } } // ✅ X EYEBALLED
-            TubeIndex::Fifteen => { Vec2 { x: 1200., y: 290. } } // ✅ X EYEBALLED
-            TubeIndex::Sixteen => { Vec2 { x: 1299., y: 623. } } // ✅
-            TubeIndex::Seventeen => { Vec2 { x: 1299., y: 457. } } // ✅
+            TubeIndex::Fourteen => { Vec2 { x: 1200.+3., y: 790.-6. } } // ✅ X EYEBALLED
+            TubeIndex::Fifteen => { Vec2 { x: 1200.+3., y: 290.+6. } } // ✅ X EYEBALLED
+            TubeIndex::Sixteen => { Vec2 { x: 1299.-7., y: 623.+5. } } // ✅
+            TubeIndex::Seventeen => { Vec2 { x: 1299.-7., y: 457.-5. } } // ✅
 
             // Right fork
             TubeIndex::Eighteen => { Vec2 { x: 1440., y: 540. } } // ✅
@@ -148,10 +148,10 @@ pub fn spawn_tube(
         }
     )).id();
 
-    let step = TUBE_LENGTH / LEDS_COUNT as f32;
+    let step = TUBE_LENGTH / (LEDS_COUNT) as f32;
 
     for i in 0..LEDS_COUNT {
-        let offset = TUBE_LENGTH / 2. + (step + 0.5) * i as f32 - TUBE_LENGTH;
+        let offset = -TUBE_LENGTH / 2. + (step) * (i as f32 + 0.5);
         let led_tube_led_entity = commands.spawn((
             LedTubeLed { index: i, ..default() },
             SpatialBundle {
