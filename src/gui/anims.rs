@@ -3,9 +3,11 @@ use bevy::prelude::{EventReader, Local, ResMut};
 use bevy::utils::default;
 use bevy_egui::{egui, EguiContexts};
 use bevy_egui::egui::{Color32, RichText, Ui, WidgetText};
+use crate::anims::meta_phys::{PhysAnimMode, PhysMetaAnim};
 use crate::anims::meta_tunnelgon::{TunnelgonLaserCycleMetaAnim, TunnelgonLaserFigureEightMetaAnim, TunnelgonLaserRoundTheClockMetaAnim, TunnelgonLaserSweepMetaAnim, TunnelgonRingsBTFMetaAnim, TunnelgonRingsFTBMetaAnim, TunnelgonRingsTrainMetaAnim};
 use crate::anims::tubes::TubesWaveAnims;
 use crate::beat::BeatEvent;
+use crate::physics_hexagon::effectors::{EyesMode, PhysHexSettings};
 
 
 #[derive(SystemParam)]
@@ -44,7 +46,7 @@ pub struct TgMetaAnimStorage {
 
 #[derive(SystemParam)]
 pub struct TubesAnim<'w> {
-    wave: ResMut<'w, TubesWaveAnims>
+    wave: ResMut<'w, TubesWaveAnims>,
 }
 
 impl TubesAnim<'_> {
@@ -70,10 +72,32 @@ pub struct TubesAnimStorage {
     sweep_in: bool,
 }
 
+#[derive(SystemParam)]
+pub struct PhysAnim<'w> {
+    phys_meta_anim: ResMut<'w, PhysMetaAnim>,
+    phys_hex_settings: ResMut<'w, PhysHexSettings>,
+}
+
+impl PhysAnim<'_> {
+    pub fn load_storage(&mut self, phys_anim_storage: PhysAnimStorage) {
+        self.phys_meta_anim.anim_mode = phys_anim_storage.anim_mode;
+        self.phys_hex_settings.eye_count = phys_anim_storage.eye_count;
+        self.phys_hex_settings.eyes_mode = phys_anim_storage.eyes_mode;
+    }
+}
+
+#[derive(Default, Copy, Clone)]
+pub struct PhysAnimStorage {
+    pub anim_mode: PhysAnimMode,
+    pub eye_count: usize,
+    pub eyes_mode: EyesMode,
+}
+
 #[derive(Default, Copy, Clone)]
 pub struct MetaAnimStorage {
     tg: TgMetaAnimStorage,
     tubes: TubesAnimStorage,
+    phys: PhysAnimStorage,
 }
 
 #[derive(Default)]
@@ -89,6 +113,7 @@ pub fn anim_gui(
     mut contexts: EguiContexts,
     mut tg: TgMetaAnim,
     mut tubes: TubesAnim,
+    mut phys: PhysAnim,
     mut memory: Local<MetaAnimMemory>,
     mut beat_reader: EventReader<BeatEvent>,
 ) {
@@ -98,11 +123,11 @@ pub fn anim_gui(
         .resizable(false)
         .show(ctx, |ui| {
             let button_width = 120.;
-            let button_height = 40.;
+            let button_height = 30.;
 
             ui.heading("Animations");
 
-            let mut settings= match memory.next {
+            let mut settings = match memory.next {
                 None => { &mut memory.current }
                 Some(_) => { memory.next.as_mut().unwrap() }
             };
@@ -134,8 +159,8 @@ pub fn anim_gui(
             ui.separator();
             ui.label("Tubes");
             ui.horizontal(|ui| {
-               tubes_button(ui, button_width, button_height, &mut settings.tubes.wave, 1, "Wave Out");
-               tubes_button(ui, button_width, button_height, &mut settings.tubes.wave, 2, "Wave In");
+                tubes_button(ui, button_width, button_height, &mut settings.tubes.wave, 1, "Wave Out");
+                tubes_button(ui, button_width, button_height, &mut settings.tubes.wave, 2, "Wave In");
             });
             ui.horizontal(|ui| {
                 tubes_button(ui, button_width, button_height, &mut settings.tubes.wave, 3, "Blocky out");
@@ -157,6 +182,27 @@ pub fn anim_gui(
                 anim_button(ui, button_width, button_height, &mut settings.tubes.punch3, "Punch3");
                 anim_button(ui, button_width, button_height, &mut settings.tubes.punch4, "Punch4");
             });
+
+            ui.separator();
+            ui.heading("Eyes");
+
+            let e_width = 60.;
+            ui.horizontal(|ui| {
+                phys_anim_mode_button(ui, e_width, button_height, &mut settings.phys.anim_mode, PhysAnimMode::None, "Off");
+                phys_anim_mode_button(ui, e_width, button_height, &mut settings.phys.anim_mode, PhysAnimMode::PushPull, "PushPull");
+                phys_anim_mode_button(ui, e_width, button_height, &mut settings.phys.anim_mode, PhysAnimMode::Sides, "Sides");
+            });
+            ui.horizontal(|ui| {
+                phys_anim_mode_button(ui, e_width, button_height, &mut settings.phys.anim_mode, PhysAnimMode::Push, "Push");
+                phys_anim_mode_button(ui, e_width, button_height, &mut settings.phys.anim_mode, PhysAnimMode::Pull, "Pull");
+                phys_anim_mode_button(ui, e_width, button_height, &mut settings.phys.anim_mode, PhysAnimMode::ContPull, "ContPull");
+            });
+            ui.horizontal(|ui| {
+                phys_anim_mode_button(ui, e_width, button_height, &mut settings.phys.eyes_mode, EyesMode::None, "None");
+                phys_anim_mode_button(ui, e_width, button_height, &mut settings.phys.eyes_mode, EyesMode::Crazy, "Crazy");
+                phys_anim_mode_button(ui, e_width, button_height, &mut settings.phys.eyes_mode, EyesMode::Stare, "Stare");
+            });
+            ui.add(egui::DragValue::new(&mut settings.phys.eye_count).speed(1).clamp_range(0..=30));
 
 
             ui.separator();
@@ -213,7 +259,8 @@ pub fn anim_gui(
 
             // Load current settings
             tg.load_storage(memory.current.tg);
-            tubes.load_storage(memory.current.tubes)
+            tubes.load_storage(memory.current.tubes);
+            phys.load_storage(memory.current.phys);
         });
 }
 
@@ -228,6 +275,15 @@ fn tubes_button(ui: &mut Ui, width: f32, height: f32, wave: &mut usize, wave_set
     if ui.add_sized([width, height], egui::SelectableLabel::new(*wave == wave_set, text))
         .clicked() {
         *wave = wave_set;
+    };
+}
+
+fn phys_anim_mode_button<T>(ui: &mut Ui, width: f32, height: f32, set: &mut T, set_to: T, text: impl Into<WidgetText>)
+    where T: PartialEq
+{
+    if ui.add_sized([width, height], egui::SelectableLabel::new(*set == set_to, text))
+        .clicked() {
+        *set = set_to;
     };
 }
 

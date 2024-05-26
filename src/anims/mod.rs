@@ -1,5 +1,6 @@
 pub mod tubes;
 pub mod meta_tunnelgon;
+pub mod meta_phys;
 
 use std::future::{Future, poll_fn, PollFn};
 use std::pin::Pin;
@@ -13,6 +14,7 @@ use bevy_defer::{AsyncAccess, AsyncCommandsExtension, AsyncFailure, in_async_con
 use crate::anims::meta_tunnelgon::{tunnelgon_laser_cycle_meta_anim, tunnelgon_laser_figure_eight_meta_anim, tunnelgon_laser_round_the_clock_meta_anim, tunnelgon_laser_sweep_anim, tunnelgon_ring_train_meta_anim, tunnelgon_rings_btf_meta_anim, tunnelgon_rings_ftb_meta_anim, TunnelgonLaserCycleMetaAnim, TunnelgonLaserFigureEightMetaAnim, TunnelgonLaserRoundTheClockMetaAnim, TunnelgonLaserSweepMetaAnim, TunnelgonRingsBTFMetaAnim, TunnelgonRingsFTBMetaAnim, TunnelgonRingsTrainMetaAnim};
 use crate::anims::tubes::{TubesWaveAnims, wave_simple, wave_blocky, tube_punch, clear, sweep, tube_punch_2, tube_punch_3, tube_punch_4, wave_noise1, wave_noise2};
 use crate::{Clear, GuiUpdate, MetaAnimUpdate};
+use crate::anims::meta_phys::{PhysMetaAnim, push_or_pull_meta_anim, push_pull_meta_anim, sides_meta_anim};
 
 
 pub struct AnimPlugin;
@@ -54,6 +56,12 @@ impl Plugin for AnimPlugin {
             sweep,
             anim_colors,
         ));
+        app.init_resource::<PhysMetaAnim>();
+        app.add_systems(MetaAnimUpdate, (
+            push_or_pull_meta_anim,
+            push_pull_meta_anim,
+            sides_meta_anim,
+        ));
     }
 }
 
@@ -69,7 +77,7 @@ fn anim_colors(
     time: Res<Time<Real>>,
 ) {
     if colors.anim == 1 {
-        colors.primary = Color::hsl(time.elapsed_seconds()*100. % 360., 1., 0.5,).as_rgba();
-        colors.secondary = Color::hsl((time.elapsed_seconds()*100. + 180.) % 360., 1., 0.5,).as_rgba();
+        colors.primary = Color::hsl(time.elapsed_seconds() * 100. % 360., 1., 0.5).as_rgba();
+        colors.secondary = Color::hsl((time.elapsed_seconds() * 100. + 180.) % 360., 1., 0.5).as_rgba();
     }
 }

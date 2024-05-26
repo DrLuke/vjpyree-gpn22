@@ -252,21 +252,21 @@ pub struct HexagonPhysicsElement;
 /// Clean up all physics element that dropped out of the Hexagon
 fn hexagon_physics_element_cleanup_system(
     mut commands: Commands,
-    query: Query<(Entity, &Parent, &Transform), With<HexagonPhysicsElement>>,
+    mut query: Query<(Entity, &Parent, &mut Transform), With<HexagonPhysicsElement>>,
     parent_query: Query<&PhysicsHexagon>,
 ) {
-    for (entity, parent, transform) in query.iter() {
+    for (entity, parent, mut transform) in query.iter_mut() {
         let hexagon_definition = match parent_query.get(parent.get()) {
             Ok(phyics_hexagon) => { phyics_hexagon.hexagon_definition }
             Err(_) => { HexagonDefinition::Main }
         };
 
         if transform.translation.truncate().length() > (hexagon_definition.size().x * 1.1 / 2.) {
-            commands.entity(entity).despawn_recursive();
+            transform.translation = Vec3::new(0., 0., 100.);
         }
 
         if transform.translation.z.abs() > 10000. {
-            commands.entity(entity).despawn_recursive();
+            transform.translation = Vec3::new(0., 0., 100.);
         }
     }
 }

@@ -11,6 +11,16 @@ use crate::physics_hexagon::{HexagonPhysicsElement, PhysicsHexagon};
 #[derive(Event)]
 pub struct CenterPullEvent {
     pub affected_hexagons: Vec<HexagonDefinition>,
+    pub strength: f32,
+}
+
+impl Default for CenterPullEvent {
+    fn default() -> Self {
+        Self {
+            affected_hexagons: vec![],
+            strength: 800000.,
+        }
+    }
 }
 
 pub fn center_pull_system(
@@ -28,7 +38,7 @@ pub fn center_pull_system(
                         direction.z = 0.;
                         commands.entity(*child).insert(
                             ExternalImpulse {
-                                impulse: -direction*800000.,
+                                impulse: -direction*event.strength,
                                 ..default()
                             }
                         );

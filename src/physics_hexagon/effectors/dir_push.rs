@@ -26,7 +26,7 @@ pub fn dir_push_system(
                     let mut direction = Vec3::new(event.dir.sin(), event.dir.cos(), 0.);
                     commands.entity(*child).insert(
                         ExternalImpulse {
-                            impulse: direction*40000000.,
+                            impulse: direction*120000000.,
                             ..default()
                         }
                     );
