@@ -19,7 +19,7 @@ impl Plugin for HexagonPlugin {
     fn build(&self, app: &mut App) {
         app.add_systems(Startup, (spawn_hexagons));
         app.add_systems(Update, (spawn_debug_led_tubes, spawn_debug_led_tube_leds));
-        app.add_systems(Update, (update_debug_led_tube_leds));
+        app.add_systems(PostUpdate, (update_debug_led_tube_leds));
         app.init_resource::<HexagonRenderTarget>();
     }
 }

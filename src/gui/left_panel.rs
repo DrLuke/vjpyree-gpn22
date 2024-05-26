@@ -10,6 +10,7 @@ use bevy_egui::{egui, EguiContexts};
 use bevy_egui::egui::{Ui, WidgetText};
 use egui_plot::{Line, Plot, PlotBounds, PlotPoints};
 use rand::{Rng, thread_rng};
+use crate::anims::AnimColors;
 use crate::beat::BeatEvent;
 use crate::beat::bpm_guesser::BpmGuesser;
 use crate::elements2d::pedrogon::SetPedrogonEvent;
@@ -55,6 +56,8 @@ pub struct NextSettings {
     tunnelgon: Vec<HexagonDefinition>,
     swirlgon: Vec<HexagonDefinition>,
     pedrogon: Vec<HexagonDefinition>,
+    colors: AnimColors,
+    col_rand_beat: bool,
 }
 
 pub fn left_panel(
@@ -69,6 +72,7 @@ pub fn left_panel(
     mut swirlgon_events: ResMut<Events<SetSwirlagonEvent>>,
     mut pedrogon_reader: Local<ManualEventReader<SetPedrogonEvent>>,
     mut pedrogon_events: ResMut<Events<SetPedrogonEvent>>,
+    mut colors: ResMut<AnimColors>,
 ) {
     let ctx = contexts.ctx_mut();
 
@@ -240,19 +244,19 @@ pub fn left_panel(
                             HexagonDefinition::B1, HexagonDefinition::B2, HexagonDefinition::B3, HexagonDefinition::Main] {
                 ui.horizontal(|ui| {
                     ui.label(format!("{:?}", hex));
-                    if ui.add_sized([60., 30.], egui::SelectableLabel::new(next_settings.tunnelgon.contains(&hex), "Tunnelgon"))
+                    if ui.add_sized([60., 20.], egui::SelectableLabel::new(next_settings.tunnelgon.contains(&hex), "Tunnelgon"))
                         .clicked() {
                         insert_hex_to_vec(&mut next_settings.tunnelgon, &hex);
                         remove_hex_from_vec(&mut next_settings.swirlgon, &hex);
                         remove_hex_from_vec(&mut next_settings.pedrogon, &hex);
                     };
-                    if ui.add_sized([60., 30.], egui::SelectableLabel::new(next_settings.swirlgon.contains(&hex), "Swirlgon"))
+                    if ui.add_sized([60., 20.], egui::SelectableLabel::new(next_settings.swirlgon.contains(&hex), "Swirlgon"))
                         .clicked() {
                         insert_hex_to_vec(&mut next_settings.swirlgon, &hex);
                         remove_hex_from_vec(&mut next_settings.tunnelgon, &hex);
                         remove_hex_from_vec(&mut next_settings.pedrogon, &hex);
                     };
-                    if ui.add_sized([60., 30.], egui::SelectableLabel::new(next_settings.pedrogon.contains(&hex), "Pedrogon"))
+                    if ui.add_sized([60., 20.], egui::SelectableLabel::new(next_settings.pedrogon.contains(&hex), "Pedrogon"))
                         .clicked() {
                         insert_hex_to_vec(&mut next_settings.pedrogon, &hex);
                         remove_hex_from_vec(&mut next_settings.swirlgon, &hex);
@@ -271,6 +275,81 @@ pub fn left_panel(
                 next_settings.gons_next_beat = true;
             }
 
+            // ----------------------------------------------
+            // Colors
+            ui.separator();
+            ui.heading("Colors");
+
+            ui.horizontal(|ui| {
+                let mut col_vals = colors.primary.as_rgba_f32();
+                ui.color_edit_button_rgba_unmultiplied(&mut col_vals);
+                colors.primary = Color::rgba_from_array(col_vals);
+
+                let mut col_vals = colors.secondary.as_rgba_f32();
+                ui.color_edit_button_rgba_unmultiplied(&mut col_vals);
+                colors.secondary = Color::rgba_from_array(col_vals);
+
+                ui.checkbox(&mut next_settings.col_rand_beat, "Rand on beat");
+            });
+
+            ui.horizontal(|ui| {
+                if ui.add_sized([60., 30.], egui::Button::new("Red/Blue"))
+                    .clicked() {
+                    next_settings.colors = AnimColors {
+                        primary: Color::RED,
+                        secondary: Color::BLUE,
+                        anim: 0,
+                    };
+                };
+                if ui.add_sized([60., 30.], egui::Button::new("Green/Purp"))
+                    .clicked() {
+                    next_settings.colors = AnimColors {
+                        primary: Color::GREEN,
+                        secondary: Color::PURPLE,
+                        anim: 0
+                    };
+                };
+                if ui.add_sized([60., 30.], egui::Button::new("Orng/Blue"))
+                    .clicked() {
+                    next_settings.colors = AnimColors {
+                        primary: Color::rgba(1.000, 0.288, 0.000, 1.000),
+                        secondary: Color::rgba(0.000, 0.143, 1.000, 1.000),
+                        anim: 0,
+                    };
+                };
+            });
+
+            ui.horizontal(|ui| {
+                if ui.add_sized([60., 30.], egui::Button::new("Blue/Red"))
+                    .clicked() {
+                    next_settings.colors = AnimColors {
+                        primary: Color::BLUE,
+                        secondary: Color::RED,
+                        anim: 0
+                    };
+                };
+                if ui.add_sized([60., 30.], egui::Button::new("Rainbow"))
+                    .clicked() {
+                    next_settings.colors = AnimColors {
+                        primary: Color::BLACK,
+                        secondary: Color::BLACK,
+                        anim: 1,
+                    };
+                };
+                if ui.add_sized([60., 30.], egui::Button::new("Random"))
+                    .clicked() {
+                    let mut rng = thread_rng();
+                    next_settings.colors = AnimColors {
+                        primary: Color::rgba(rng.gen(), rng.gen(), rng.gen(), 1.),
+                        secondary: Color::rgba(rng.gen(), rng.gen(), rng.gen(), 1.),
+                        anim: 0
+                    };
+                };
+            });
+
+            // ----------------------------------------------
+            // Write next settings
+
             if is_beat {
                 if next_settings.swirl_next_beat {
                     swirl.preset = next_settings.swirl_preset;
@@ -288,6 +367,21 @@ pub fn left_panel(
                     });
                     next_settings.gons_next_beat = false;
                 }
+
+                if next_settings.col_rand_beat {
+                    let mut rng = thread_rng();
+                    next_settings.colors = AnimColors {
+                        primary: Color::rgba(rng.gen(), rng.gen(), rng.gen(), 1.),
+                        secondary: Color::rgba(rng.gen(), rng.gen(), rng.gen(), 1.),
+                        anim: 0
+                    };
+                }
+
+                if next_settings.colors.anim == 0 {
+                    colors.primary = next_settings.colors.primary;
+                    colors.secondary = next_settings.colors.secondary;
+                }
+                colors.anim = next_settings.colors.anim;
             }
 
             // ----------------------------------------------

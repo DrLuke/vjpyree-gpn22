@@ -6,7 +6,7 @@ use std::pin::Pin;
 use std::task::{Context, Poll};
 use bevy::app::{App, Plugin, PostUpdate, Startup};
 use bevy::log::error;
-use bevy::prelude::{Color, Commands, Event, EventReader, IntoSystemSetConfigs, PreUpdate, Resource, Time, Update, IntoSystemConfigs};
+use bevy::prelude::{Color, Commands, Event, EventReader, IntoSystemSetConfigs, PreUpdate, Resource, Time, Update, IntoSystemConfigs, ResMut, Res};
 use bevy::tasks::futures_lite::StreamExt;
 use bevy::time::Real;
 use bevy_defer::{AsyncAccess, AsyncCommandsExtension, AsyncFailure, in_async_context, spawn, world};
@@ -22,6 +22,7 @@ impl Plugin for AnimPlugin {
         app.insert_resource(AnimColors {
             primary: Color::RED,
             secondary: Color::BLUE,
+            anim: 0,
         });
         app.init_resource::<TunnelgonLaserCycleMetaAnim>();
         app.init_resource::<TunnelgonLaserFigureEightMetaAnim>();
@@ -51,12 +52,24 @@ impl Plugin for AnimPlugin {
             wave_noise1,
             wave_noise2,
             sweep,
+            anim_colors,
         ));
     }
 }
 
 #[derive(Resource, Copy, Clone, Default)]
 pub struct AnimColors {
-    primary: Color,
-    secondary: Color,
+    pub(crate) primary: Color,
+    pub(crate) secondary: Color,
+    pub anim: usize,
+}
+
+fn anim_colors(
+    mut colors: ResMut<AnimColors>,
+    time: Res<Time<Real>>,
+) {
+    if colors.anim == 1 {
+        colors.primary = Color::hsl(time.elapsed_seconds()*100. % 360., 1., 0.5,).as_rgba();
+        colors.secondary = Color::hsl((time.elapsed_seconds()*100. + 180.) % 360., 1., 0.5,).as_rgba();
+    }
 }

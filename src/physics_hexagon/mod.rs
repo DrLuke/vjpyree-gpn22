@@ -10,6 +10,7 @@ use bevy::prelude::*;
 use bevy::render::camera::{RenderTarget};
 use bevy::render::view::RenderLayers;
 use bevy_rapier3d::prelude::{Ccd, Collider, RigidBody};
+use crate::anims::AnimColors;
 use crate::hexagon::HexagonDefinition;
 use crate::physics_hexagon::effectors::EffectorsPlugin;
 use crate::physics_hexagon::hexagon_colliders::spawn_hexagon_collier;
@@ -30,7 +31,7 @@ impl Plugin for PhysicsHexagonPlugin {
             spawn_physical_leds.after(spawn_led_tubes)
         ));
         app.add_systems(Update, hexagon_physics_element_cleanup_system);
-        app.add_systems(Update, (drive_lights_system));
+        app.add_systems(Update, (drive_lights_system, lights_primary, lights_secondary));
         app.register_type::<PhysicalTubeIndex>();
         app.register_type::<PhysicalLedTube>();
         app.register_type::<PhysicalLedTubeLed>();
@@ -78,6 +79,12 @@ pub struct PhysicsHexagon {
 /// All colliders and hexagon meshes should be child entities of this
 #[derive(Component)]
 pub struct HexagonGeometry;
+
+#[derive(Component)]
+pub struct PrimaryLight;
+
+#[derive(Component)]
+pub struct SecondaryLight;
 
 fn spawn_physics_hexagon(
     commands: &mut Commands,
@@ -200,7 +207,7 @@ fn spawn_physics_hexagon(
                 ..default()
             },
             ..default()
-        }, PropagatingRenderLayers { render_layers: RenderLayers::layer(1) }));
+        }, PropagatingRenderLayers { render_layers: RenderLayers::layer(1) }, PrimaryLight));
     commands
         .spawn((PointLightBundle {
             transform: Transform::from_xyz(hexagon_definition.center().x - 1920. / 2. - 100., hexagon_definition.center().y - 1080. / 2., 150.0),
@@ -213,7 +220,7 @@ fn spawn_physics_hexagon(
                 ..default()
             },
             ..default()
-        }, PropagatingRenderLayers { render_layers: RenderLayers::layer(1) }));
+        }, PropagatingRenderLayers { render_layers: RenderLayers::layer(1) }, SecondaryLight));
 
     return hexagon_entity;
 }
@@ -294,5 +301,23 @@ fn hexagon_physics_element_cleanup_system(
         if transform.translation.z.abs() > 10000. {
             commands.entity(entity).despawn_recursive();
         }
+    }
+}
+
+fn lights_primary(
+    mut query: Query<&mut PointLight, With<PrimaryLight>>,
+    colors: Res<AnimColors>,
+) {
+    for mut pl in query.iter_mut() {
+        pl.color = colors.primary;
+    }
+}
+
+fn lights_secondary(
+    mut query: Query<&mut PointLight, With<SecondaryLight>>,
+    colors: Res<AnimColors>,
+) {
+    for mut pl in query.iter_mut() {
+        pl.color = colors.secondary;
     }
 }
