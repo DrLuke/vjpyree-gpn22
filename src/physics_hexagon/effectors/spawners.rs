@@ -2,7 +2,7 @@ use bevy::prelude::*;
 use bevy::render::view::RenderLayers;
 use bevy_rapier3d::dynamics::{Ccd, RigidBody};
 use bevy_rapier3d::geometry::Collider;
-use rand::thread_rng;
+use rand::{Rng, thread_rng};
 use crate::physics_hexagon::effectors::PhysHexSettings;
 use crate::physics_hexagon::{HexagonPhysicsElement, PhysicsHexagon};
 use crate::propagating_render_layers::PropagatingRenderLayers;
@@ -35,8 +35,8 @@ pub fn spawners_eyes(
             let entity = commands.spawn((
                 SpatialBundle {
                     transform: Transform::from_xyz(
-                        0.,
-                        0.,
+                        rng.gen::<f32>() * 400. - 200.,
+                        rng.gen::<f32>() * 400. - 200.,
                         100.),
                     ..default()
                 },

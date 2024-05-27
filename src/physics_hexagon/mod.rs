@@ -10,6 +10,7 @@ use bevy::prelude::*;
 use bevy::render::camera::{RenderTarget};
 use bevy::render::view::RenderLayers;
 use bevy_rapier3d::prelude::{Ccd, Collider, RigidBody};
+use rand::{Rng, thread_rng};
 use crate::anims::AnimColors;
 use crate::hexagon::HexagonDefinition;
 use crate::physics_hexagon::effectors::EffectorsPlugin;
@@ -255,6 +256,7 @@ fn hexagon_physics_element_cleanup_system(
     mut query: Query<(Entity, &Parent, &mut Transform), With<HexagonPhysicsElement>>,
     parent_query: Query<&PhysicsHexagon>,
 ) {
+    let mut rng = thread_rng();
     for (entity, parent, mut transform) in query.iter_mut() {
         let hexagon_definition = match parent_query.get(parent.get()) {
             Ok(phyics_hexagon) => { phyics_hexagon.hexagon_definition }
@@ -262,11 +264,15 @@ fn hexagon_physics_element_cleanup_system(
         };
 
         if transform.translation.truncate().length() > (hexagon_definition.size().x * 1.1 / 2.) {
-            transform.translation = Vec3::new(0., 0., 100.);
+            transform.translation = Vec3::new(rng.gen::<f32>() * 400. - 200.,
+                                              rng.gen::<f32>() * 400. - 200.,
+                                              100.);
         }
 
         if transform.translation.z.abs() > 10000. {
-            transform.translation = Vec3::new(0., 0., 100.);
+            transform.translation = Vec3::new(rng.gen::<f32>() * 400. - 200.,
+                                              rng.gen::<f32>() * 400. - 200.,
+                                              100.);
         }
     }
 }

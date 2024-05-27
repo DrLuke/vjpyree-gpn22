@@ -214,7 +214,13 @@ pub fn anim_gui(
                 phys_anim_mode_button(ui, e_width, button_height, &mut settings.phys.eyes_mode, EyesMode::Crazy, "Crazy");
                 phys_anim_mode_button(ui, e_width, button_height, &mut settings.phys.eyes_mode, EyesMode::Stare, "Stare");
             });
-            ui.add(egui::DragValue::new(&mut settings.phys.eye_count).speed(1).clamp_range(0..=30));
+            ui.horizontal(|ui| {
+                ui.add(egui::DragValue::new(&mut settings.phys.eye_count).speed(1).clamp_range(0..=30));
+                if ui.button("0").clicked() { settings.phys.eye_count = 0; }
+                if ui.button("7").clicked() { settings.phys.eye_count = 7; }
+                if ui.button("19").clicked() { settings.phys.eye_count = 19; }
+            });
+
 
             // SETTINGS DONE
             let settings_clone = settings.clone();
