@@ -114,7 +114,7 @@ pub struct MetaAnimMemory {
     next: Option<MetaAnimStorage>,
     edit_direct: bool,
     next_on_beat: bool,
-    memory: Vec<MetaAnimMemory>,
+    memory: Vec<MetaAnimStorage>,
     gons_written: bool,
 }
 
@@ -133,9 +133,9 @@ pub fn anim_gui(
 
     egui::SidePanel::right("Animations GUI")
         .resizable(false)
-        .show(ctx, |ui| {
+        .show(ctx, |mut ui| {
             let button_width = 120.;
-            let button_height = 30.;
+            let button_height = 20.;
 
             ui.heading("Animations");
 
@@ -216,11 +216,26 @@ pub fn anim_gui(
             });
             ui.add(egui::DragValue::new(&mut settings.phys.eye_count).speed(1).clamp_range(0..=30));
 
+            // SETTINGS DONE
+            let settings_clone = settings.clone();
 
             ui.separator();
             ui.label("Presets");
             if ui.button("Preset 1").clicked() {
                 memory.next = Some(preset1());
+            }
+
+            ui.separator();
+            ui.label("Storage");
+            if ui.button("Store").clicked {
+                memory.memory.push(settings_clone)
+            }
+            for (i, settings) in memory.memory.clone().iter().enumerate() {
+                match memory_storage_buttons(&mut ui, i) {
+                    MemStorageButtonAction::None => {}
+                    MemStorageButtonAction::Load => { memory.next = Some(settings.clone()); }
+                    MemStorageButtonAction::Delete => { memory.memory.remove(i); }
+                }
             }
 
             ui.separator();
@@ -305,6 +320,26 @@ fn phys_anim_mode_button<T>(ui: &mut Ui, width: f32, height: f32, set: &mut T, s
         .clicked() {
         *set = set_to;
     };
+}
+
+enum MemStorageButtonAction {
+    None,
+    Load,
+    Delete,
+}
+
+fn memory_storage_buttons(ui: &mut Ui, index: usize) -> MemStorageButtonAction {
+    let mut ret: MemStorageButtonAction = MemStorageButtonAction::None;
+    ui.horizontal(|ui| {
+        ui.label(format!("{:0>2}", index));
+        if ui.button("load").clicked() {
+            ret = MemStorageButtonAction::Load
+        };
+        if ui.button("delete").clicked() {
+            ret = MemStorageButtonAction::Delete
+        };
+    });
+    ret
 }
 
 fn preset1() -> MetaAnimStorage {
