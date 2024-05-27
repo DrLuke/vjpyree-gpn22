@@ -1,5 +1,5 @@
 use bevy::ecs::system::SystemParam;
-use bevy::prelude::{EventReader, Local, ResMut};
+use bevy::prelude::{EventReader, EventWriter, Local, ResMut};
 use bevy::utils::default;
 use bevy_egui::{egui, EguiContexts};
 use bevy_egui::egui::{Color32, RichText, Ui, WidgetText};
@@ -7,6 +7,11 @@ use crate::anims::meta_phys::{PhysAnimMode, PhysMetaAnim};
 use crate::anims::meta_tunnelgon::{TunnelgonLaserCycleMetaAnim, TunnelgonLaserFigureEightMetaAnim, TunnelgonLaserRoundTheClockMetaAnim, TunnelgonLaserSweepMetaAnim, TunnelgonRingsBTFMetaAnim, TunnelgonRingsFTBMetaAnim, TunnelgonRingsTrainMetaAnim};
 use crate::anims::tubes::TubesWaveAnims;
 use crate::beat::BeatEvent;
+use crate::elements2d::pedrogon::SetPedrogonEvent;
+use crate::elements2d::swirlagon::SetSwirlagonEvent;
+use crate::elements2d::tunnelgon::SetTunnelgonEvent;
+use crate::hexagon::HexagonDefinition;
+use crate::hexagon::HexagonDefinition::{A1, A2, A3, B1, B2, B3};
 use crate::physics_hexagon::effectors::{EyesMode, PhysHexSettings};
 
 
@@ -93,11 +98,14 @@ pub struct PhysAnimStorage {
     pub eyes_mode: EyesMode,
 }
 
-#[derive(Default, Copy, Clone)]
+#[derive(Default, Clone)]
 pub struct MetaAnimStorage {
     tg: TgMetaAnimStorage,
     tubes: TubesAnimStorage,
     phys: PhysAnimStorage,
+    tg_next: Vec<HexagonDefinition>,
+    sg_next: Vec<HexagonDefinition>,
+    pg_next: Vec<HexagonDefinition>,
 }
 
 #[derive(Default)]
@@ -107,6 +115,7 @@ pub struct MetaAnimMemory {
     edit_direct: bool,
     next_on_beat: bool,
     memory: Vec<MetaAnimMemory>,
+    gons_written: bool,
 }
 
 pub fn anim_gui(
@@ -116,6 +125,9 @@ pub fn anim_gui(
     mut phys: PhysAnim,
     mut memory: Local<MetaAnimMemory>,
     mut beat_reader: EventReader<BeatEvent>,
+    mut tg_writer: EventWriter<SetTunnelgonEvent>,
+    mut sg_writer: EventWriter<SetSwirlagonEvent>,
+    mut pg_writer: EventWriter<SetPedrogonEvent>,
 ) {
     let ctx = contexts.ctx_mut();
 
@@ -208,7 +220,7 @@ pub fn anim_gui(
             ui.separator();
             ui.label("Presets");
             if ui.button("Preset 1").clicked() {
-                memory.next = Some(preset1())
+                memory.next = Some(preset1());
             }
 
             ui.separator();
@@ -224,16 +236,17 @@ pub fn anim_gui(
             ui.horizontal(|ui| {
                 if ui.add_sized([button_width, button_height], egui::Button::new("Prepare"))
                     .clicked() {
-                    memory.next = Some(memory.current);
+                    memory.next = Some(memory.current.clone());
                 };
                 anim_button(ui, button_width, button_height, &mut memory.next_on_beat, "Load on beat");
             });
             ui.horizontal(|ui| {
                 if ui.add_sized([button_width, button_height], egui::Button::new("Load"))
                     .clicked() {
-                    if let Some(next) = memory.next {
+                    if let Some(next) = memory.next.clone() {
                         memory.current = next;
                         memory.next = None;
+                        memory.gons_written = false;
                     }
                 };
                 if ui.add_sized([button_width, button_height], egui::Button::new("Discard"))
@@ -247,12 +260,13 @@ pub fn anim_gui(
             ui.allocate_rect(ui.available_rect_before_wrap(), egui::Sense::hover());
 
             // If next on beat is activated, switch next to current on beat
-            if let Some(next) = memory.next {
+            if let Some(next) = memory.next.clone() {
                 if memory.next_on_beat {
                     for _ in beat_reader.read() {
-                        memory.current = next;
+                        memory.current = next.clone();
                         memory.next = None;
                         memory.next_on_beat = false;
+                        memory.gons_written = false;
                     }
                 }
             }
@@ -261,6 +275,12 @@ pub fn anim_gui(
             tg.load_storage(memory.current.tg);
             tubes.load_storage(memory.current.tubes);
             phys.load_storage(memory.current.phys);
+            if !memory.gons_written {
+                tg_writer.send(SetTunnelgonEvent { affected_hexagons: memory.current.tg_next.clone() });
+                sg_writer.send(SetSwirlagonEvent { affected_hexagons: memory.current.sg_next.clone() });
+                pg_writer.send(SetPedrogonEvent { affected_hexagons: memory.current.pg_next.clone() });
+                memory.gons_written = true;
+            };
         });
 }
 
@@ -299,6 +319,7 @@ fn preset1() -> MetaAnimStorage {
             wave: 1,
             ..default()
         },
+        tg_next: vec![A1, A2, A3, B1, B2, B3],
         ..default()
     }
 }
