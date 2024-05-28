@@ -38,7 +38,7 @@ pub fn spawn_pedrogon(
             MaterialMesh2dBundle {
                 mesh,
                 material: materials.add(ColorMaterial {
-                    texture: None, //TODO
+                    texture: None,
                     ..default()
                 }),
                 transform: Transform::from_xyz(
