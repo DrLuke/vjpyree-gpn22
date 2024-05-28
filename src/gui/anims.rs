@@ -1,5 +1,6 @@
+use bevy::ecs::event::ManualEventReader;
 use bevy::ecs::system::SystemParam;
-use bevy::prelude::{EventReader, EventWriter, Local, ResMut};
+use bevy::prelude::{EventReader, Events, EventWriter, Local, ResMut};
 use bevy::utils::default;
 use bevy_egui::{egui, EguiContexts};
 use bevy_egui::egui::{Color32, RichText, Ui, WidgetText};
@@ -125,9 +126,12 @@ pub fn anim_gui(
     mut phys: PhysAnim,
     mut memory: Local<MetaAnimMemory>,
     mut beat_reader: EventReader<BeatEvent>,
-    mut tg_writer: EventWriter<SetTunnelgonEvent>,
-    mut sg_writer: EventWriter<SetSwirlagonEvent>,
-    mut pg_writer: EventWriter<SetPedrogonEvent>,
+    mut tg_writer: ResMut<Events<SetTunnelgonEvent>>,
+    mut sg_writer: ResMut<Events<SetSwirlagonEvent>>,
+    mut pg_writer: ResMut<Events<SetPedrogonEvent>>,
+    mut tg_reader: Local<ManualEventReader<SetTunnelgonEvent>>,
+    mut sg_reader: Local<ManualEventReader<SetSwirlagonEvent>>,
+    mut pg_reader: Local<ManualEventReader<SetPedrogonEvent>>,
 ) {
     let ctx = contexts.ctx_mut();
 
@@ -143,6 +147,16 @@ pub fn anim_gui(
                 None => { &mut memory.current }
                 Some(_) => { memory.next.as_mut().unwrap() }
             };
+
+            for ev in tg_reader.read(&tg_writer) {
+                settings.tg_next = ev.affected_hexagons.clone();
+            }
+            for ev in sg_reader.read(&sg_writer) {
+                settings.sg_next = ev.affected_hexagons.clone();
+            }
+            for ev in pg_reader.read(&pg_writer) {
+                settings.pg_next = ev.affected_hexagons.clone();
+            }
 
             ui.separator();
             ui.label("Laser");
@@ -227,9 +241,29 @@ pub fn anim_gui(
 
             ui.separator();
             ui.label("Presets");
-            if ui.button("Preset 1").clicked() {
-                memory.next = Some(preset1());
-            }
+            ui.horizontal(|ui| {
+                if ui.button("Tunnelgons").clicked() {
+                    memory.next = Some(preset1());
+                }
+                if ui.button("TG+Swirl").clicked() {
+                    memory.next = Some(preset2());
+                }
+                if ui.button("TG+Swirl").clicked() {
+                    memory.next = Some(preset3());
+                }
+            });
+            ui.horizontal(|ui| {
+                if ui.button("Swirl").clicked() {
+                    memory.next = Some(preset4());
+                }
+                if ui.button("Swirl+TG").clicked() {
+                    memory.next = Some(preset5());
+                }
+                if ui.button("Pedro").clicked() {
+                    memory.next = Some(preset6());
+                }
+            });
+
 
             ui.separator();
             ui.label("Storage");
@@ -361,6 +395,89 @@ fn preset1() -> MetaAnimStorage {
             ..default()
         },
         tg_next: vec![A1, A2, A3, B1, B2, B3],
+        ..default()
+    }
+}
+
+fn preset2() -> MetaAnimStorage {
+    MetaAnimStorage {
+        tg: TgMetaAnimStorage {
+            laser_cycle: true,
+            ring_ftb: true,
+            ring_btf: true,
+            ..default()
+        },
+        tubes: TubesAnimStorage {
+            punch3: true,
+            ..default()
+        },
+        tg_next: vec![A1, A3, B1, B3],
+        sg_next: vec![A2, B2],
+        phys: PhysAnimStorage {
+          eye_count: 19,
+            ..default()
+        },
+        ..default()
+    }
+}
+
+fn preset3() -> MetaAnimStorage {
+    MetaAnimStorage {
+        tg: TgMetaAnimStorage {
+            laser_cycle: true,
+            laser_round_the_clock: true,
+            ring_ftb: true,
+            ring_btf: true,
+            ..default()
+        },
+        tubes: TubesAnimStorage {
+            wave: 6,
+            ..default()
+        },
+        tg_next: vec![A1, A3, B1, B3],
+        sg_next: vec![A2, B2],
+        phys: PhysAnimStorage {
+            eye_count: 19,
+            ..default()
+        },
+        ..default()
+    }
+}
+
+fn preset4() -> MetaAnimStorage {
+    MetaAnimStorage {
+        tubes: TubesAnimStorage {
+            wave: 3,
+            ..default()
+        },
+        sg_next: vec![A1, A3, A2, B2, B1, B3],
+        phys: PhysAnimStorage {
+            eye_count: 19,
+            ..default()
+        },
+        ..default()
+    }
+}
+
+fn preset5() -> MetaAnimStorage {
+    MetaAnimStorage {
+        tubes: TubesAnimStorage {
+            wave: 5,
+            ..default()
+        },
+        sg_next: vec![A1, A3, B1, B3],
+        tg_next: vec![A2, B2],
+        ..default()
+    }
+}
+
+fn preset6() -> MetaAnimStorage {
+    MetaAnimStorage {
+        tubes: TubesAnimStorage {
+            wave: 5,
+            ..default()
+        },
+        pg_next: vec![A1, A3, A2, B2, B1, B3],
         ..default()
     }
 }
