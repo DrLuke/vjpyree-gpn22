@@ -64,7 +64,7 @@ fn main() {
         )
         .add_plugins(WorldInspectorPlugin::new())
         .insert_resource(RapierConfiguration {
-            gravity: Vec3::Z * -9.81 * 100.,
+            gravity: Vec3::Z * -9.81 * 1000.,
 
             ..RapierConfiguration::new(10.)
         })

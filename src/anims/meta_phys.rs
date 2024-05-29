@@ -6,6 +6,7 @@ use crate::hexagon::HexagonDefinition;
 use crate::physics_hexagon::effectors::center_pull::CenterPullEvent;
 use crate::physics_hexagon::effectors::center_push::CenterPushEvent;
 use crate::physics_hexagon::effectors::dir_push::DirPushEvent;
+use crate::physics_hexagon::effectors::whirl::WhirlEvent;
 
 #[derive(Default, PartialEq, Clone, Copy)]
 pub enum PhysAnimMode {
@@ -16,6 +17,8 @@ pub enum PhysAnimMode {
     PushPull,
     ContPull,
     Sides,
+    UpDown,
+    Whirl,
 }
 
 #[derive(Resource, Default)]
@@ -104,4 +107,36 @@ pub fn sides_meta_anim(
 
         settings.dir_push_counter = (settings.dir_push_counter + 1) % 6;
     }
+}
+
+pub fn up_down(
+    mut push_writer: EventWriter<DirPushEvent>,
+    mut beat_reader: EventReader<BeatEvent>,
+    mut settings: ResMut<PhysMetaAnim>,
+) {
+    if settings.anim_mode != PhysAnimMode::UpDown { return; }
+
+    let dirs = vec![
+        0.*PI/3.,
+        3.*PI/3.,
+    ];
+
+    for _ in beat_reader.read() {
+        let dir = dirs[settings.dir_push_counter % 2];
+
+        push_writer.send(DirPushEvent {
+            dir
+        });
+
+        settings.dir_push_counter = (settings.dir_push_counter + 1) % 2;
+    }
+}
+
+pub fn whirl(
+    mut whirl_writer: EventWriter<WhirlEvent>,
+    mut settings: ResMut<PhysMetaAnim>,
+) {
+    if settings.anim_mode == PhysAnimMode::Whirl {
+        whirl_writer.send(WhirlEvent);
+    };
 }

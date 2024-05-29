@@ -7,12 +7,14 @@ use crate::physics_hexagon::effectors::center_push::{center_push_system, CenterP
 use crate::physics_hexagon::effectors::dir_push::{dir_push_system, DirPushEvent};
 use crate::physics_hexagon::effectors::eyes_mode::eyes_mode;
 use crate::physics_hexagon::effectors::spawners::spawners_eyes;
+use crate::physics_hexagon::effectors::whirl::{whirl_system, WhirlEvent};
 
 pub mod center_pull;
 pub mod center_push;
 pub mod dir_push;
 pub mod eyes_mode;
 pub mod spawners;
+pub mod whirl;
 
 pub struct EffectorsPlugin;
 
@@ -21,7 +23,8 @@ impl Plugin for EffectorsPlugin {
         app.add_event::<CenterPullEvent>();
         app.add_event::<CenterPushEvent>();
         app.add_event::<DirPushEvent>();
-        app.add_systems(Update, (center_pull_system, center_push_system, dir_push_system, eyes_mode));
+        app.add_event::<WhirlEvent>();
+        app.add_systems(Update, (center_pull_system, center_push_system, dir_push_system, eyes_mode, whirl_system));
         app.add_systems(PostUpdate, (spawners_eyes));
         app.insert_resource(PhysHexSettings::default());
     }
@@ -32,7 +35,8 @@ pub enum EyesMode {
     #[default]
     None,
     Stare,
-    Crazy
+    Crazy,
+    StareScan,
 }
 
 #[derive(Resource, Default)]

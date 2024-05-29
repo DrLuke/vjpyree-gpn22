@@ -1,7 +1,7 @@
 use std::f32::consts::PI;
 use bevy::asset::Handle;
 use bevy::hierarchy::Children;
-use bevy::math::{Quat, Vec3};
+use bevy::math::{Quat, quat, Vec3};
 use bevy::prelude::{EventReader, GlobalTransform, Local, Mesh, Query, Real, Res, Time, Transform, With};
 use bevy_rapier3d::dynamics::RigidBody;
 use rand::{Rng, thread_rng};
@@ -35,6 +35,9 @@ pub fn eyes_mode(
                 EyesMode::None => { Quat::default() }
                 EyesMode::Crazy => { t.rotation * *beat_rot }
                 EyesMode::Stare => { p_t.to_scale_rotation_translation().1.inverse() }
+                EyesMode::StareScan => {
+                    p_t.to_scale_rotation_translation().1.inverse() * Quat::from_rotation_x(0.3 + (time.elapsed_seconds() * 0.3).sin() * 0.1) * Quat::from_rotation_y(time.elapsed_seconds().sin() * 0.5)
+                }
             };
 
             let current = t.rotation;

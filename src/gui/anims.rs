@@ -224,6 +224,11 @@ pub fn anim_gui(
                 phys_anim_mode_button(ui, e_width, button_height, &mut settings.phys.anim_mode, PhysAnimMode::ContPull, "ContPull");
             });
             ui.horizontal(|ui| {
+                phys_anim_mode_button(ui, e_width, button_height, &mut settings.phys.anim_mode, PhysAnimMode::UpDown, "UpDown");
+                phys_anim_mode_button(ui, e_width, button_height, &mut settings.phys.anim_mode, PhysAnimMode::Whirl, "Whirl");
+                phys_anim_mode_button(ui, e_width, button_height, &mut settings.phys.eyes_mode, EyesMode::StareScan, "StareScan");;
+            });
+            ui.horizontal(|ui| {
                 phys_anim_mode_button(ui, e_width, button_height, &mut settings.phys.eyes_mode, EyesMode::None, "None");
                 phys_anim_mode_button(ui, e_width, button_height, &mut settings.phys.eyes_mode, EyesMode::Crazy, "Crazy");
                 phys_anim_mode_button(ui, e_width, button_height, &mut settings.phys.eyes_mode, EyesMode::Stare, "Stare");
