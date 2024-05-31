@@ -399,6 +399,10 @@ fn preset1() -> MetaAnimStorage {
             wave: 1,
             ..default()
         },
+        phys: PhysAnimStorage {
+            eye_count: 19,
+            ..default()
+        },
         tg_next: vec![A1, A2, A3, B1, B2, B3],
         ..default()
     }
@@ -472,6 +476,10 @@ fn preset5() -> MetaAnimStorage {
         },
         sg_next: vec![A1, A3, B1, B3],
         tg_next: vec![A2, B2],
+        phys: PhysAnimStorage {
+            eye_count: 19,
+            ..default()
+        },
         ..default()
     }
 }
@@ -483,6 +491,10 @@ fn preset6() -> MetaAnimStorage {
             ..default()
         },
         pg_next: vec![A1, A3, A2, B2, B1, B3],
+        phys: PhysAnimStorage {
+            eye_count: 19,
+            ..default()
+        },
         ..default()
     }
 }
