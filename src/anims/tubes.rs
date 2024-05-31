@@ -2,13 +2,17 @@ use std::f32::consts::PI;
 use std::future::join;
 use bevy::asset::Assets;
 use bevy::hierarchy::Children;
-use bevy::prelude::{Color, Commands, Entity, EventReader, GlobalTransform, Local, Parent, Query, Real, Res, ResMut, Resource, Time, With};
+use bevy::input::ButtonState;
+use bevy::input::keyboard::KeyboardInput;
+use bevy::prelude::{Color, Commands, Entity, EventReader, GlobalTransform, KeyCode, Local, Parent, Query, Real, Res, ResMut, Resource, Time, With};
 use bevy_defer::{AsyncAccess, AsyncCommandsExtension, AsyncFailure, AsyncResult, signal_ids, world};
 use bevy_defer::access::AsyncEntityMut;
 use bevy_defer::reactors::Reactors;
 use bevy_defer::sync::oneshot::ChannelOut;
+use bevy_egui::systems::InputEvents;
 use futures::future::join_all;
 use noise::{NoiseFn, OpenSimplex, Perlin};
+use rand::{Rng, thread_rng};
 use crate::anims::AnimColors;
 use crate::beat::BeatEvent;
 use crate::elements2d::tunnelgon::{CancelAnim, TunnelgonMaterial};
@@ -499,5 +503,217 @@ pub fn wave_noise2(
     for (mut ltl, gt) in query.iter_mut() {
         let val = perlin.get([gt.translation().x as f64 * 0.01, gt.translation().y as f64  * 0.01, time.elapsed_seconds_f64()]) as f32;
         ltl.color = colors.primary * val * 2. + colors.secondary * (1.-val) * 0.2;
+    }
+}
+
+
+
+pub fn strobe1(
+    mut query: Query<(&LedTube, &Children)>,
+    mut commands: Commands,
+    colors: Res<AnimColors>,
+    mut reactors: ResMut<Reactors>,
+    mut keyboard_input_events: EventReader<KeyboardInput>,
+) {
+    for ev in keyboard_input_events.read() {
+        if ev.key_code != KeyCode::Quote || ev.state != ButtonState::Pressed {
+            continue;
+        }
+        let signal = reactors.get_named::<CancelPunch>("cancel_punch");
+        signal.send(true);
+
+        let anim_indices = vec![
+            One,
+            Two,
+            Three,
+            Four,
+            Five,
+            Six,
+            Seven,
+            Eight,
+            Nine,
+            Ten,
+            Eleven,
+            Twelve,
+            Thirteen,
+            Fourteen,
+            Fifteen,
+            Sixteen,
+            Seventeen,
+            Eighteen,
+            Nineteen,
+            Twenty,
+            Twentyone,
+            Twentytwo,
+        ];
+
+        let mut rng = thread_rng();
+
+        let relevant_indices = vec![
+            anim_indices[rng.gen_range(0..anim_indices.len())],
+            anim_indices[rng.gen_range(0..anim_indices.len())],
+            anim_indices[rng.gen_range(0..anim_indices.len())],
+            anim_indices[rng.gen_range(0..anim_indices.len())],
+        ];
+
+        let tube_entities: Vec<Vec<Entity>> = query
+            .iter()
+            .filter(|(led_tube, children)| {
+                relevant_indices.contains(&led_tube.get_tube_index())
+            })
+            .map(|(led_tube, children)| {
+                children.iter().cloned().collect()
+            })
+            .collect();
+
+        let primary_color = Color::WHITE;
+        let secondary_color = colors.secondary;
+
+        for tube_entity in tube_entities {
+            commands.spawn_task(move || async move {
+                let signal = world().named_signal::<CancelPunch>("cancel_punch");
+                let _ = signal.poll().await; // Discard first message to avoid immediate cancel
+
+                // Spawn PT1 anim
+                let pt1_entity = world().spawn_bundle(
+                    Pt1Anim {
+                        val: 1.3,
+                        target: 0.,
+                        time_constant: 0.3,
+                        //time_constant: 1.,
+                    }
+                ).await.id();
+                let pt1_component = world().entity(pt1_entity).component::<Pt1Anim>();
+
+                let led_tube_entities: Vec<AsyncEntityMut> = tube_entity.iter().map(|child| {
+                    world().entity(*child)
+                }).collect();
+
+                loop {
+                    let (next_val, finished) = match signal.try_read() {
+                        Some(true) => (0., true),
+                        Some(false) | None => pt1_component.get(|pt1anim| { (pt1anim.get_val(), pt1anim.target_reached()) }).await.unwrap_or((0., true))
+                    };
+
+                    let futures: Vec<ChannelOut<AsyncResult<_>>> = led_tube_entities.iter().map(|ent| {
+                        ent.component::<LedTubeLed>().set(move |ltl| {
+                            let ind = (ltl.get_index() as f32 / 15.) - 0.5;
+                            let lum = next_val * (ind * (1.3 - next_val) * 2.).cos();
+                            ltl.color = primary_color.clone() * lum + secondary_color.clone() * (1. - lum.min(1.)) * 0.2;
+                        })
+                    }).collect();
+                    let _ = join_all(futures).await;
+
+                    if finished {
+                        break;
+                    }
+                }
+
+                world().entity(pt1_entity).despawn().await;
+                Ok(())
+            });
+        }
+    }
+}
+
+pub fn strobe2(
+    mut query: Query<(&LedTube, &Children)>,
+    mut commands: Commands,
+    colors: Res<AnimColors>,
+    mut reactors: ResMut<Reactors>,
+    mut keyboard_input_events: EventReader<KeyboardInput>,
+) {
+    for ev in keyboard_input_events.read() {
+        println!("{:?}", ev.key_code);
+        if ev.key_code != KeyCode::BracketLeft || ev.state != ButtonState::Pressed {
+            continue;
+        }
+        let signal = reactors.get_named::<CancelPunch>("cancel_punch");
+        signal.send(true);
+
+        let anim_indices = vec![
+            One,
+            Two,
+            Three,
+            Four,
+            Five,
+            Six,
+            Seven,
+            Eight,
+            Nine,
+            Ten,
+            Eleven,
+            Twelve,
+            Thirteen,
+            Fourteen,
+            Fifteen,
+            Sixteen,
+            Seventeen,
+            Eighteen,
+            Nineteen,
+            Twenty,
+            Twentyone,
+            Twentytwo,
+        ];
+
+        let relevant_indices = anim_indices;
+
+        let tube_entities: Vec<Vec<Entity>> = query
+            .iter()
+            .filter(|(led_tube, children)| {
+                relevant_indices.contains(&led_tube.get_tube_index())
+            })
+            .map(|(led_tube, children)| {
+                children.iter().cloned().collect()
+            })
+            .collect();
+
+        let primary_color = Color::WHITE;
+        let secondary_color = colors.secondary;
+
+        for tube_entity in tube_entities {
+            commands.spawn_task(move || async move {
+                let signal = world().named_signal::<CancelPunch>("cancel_punch");
+                let _ = signal.poll().await; // Discard first message to avoid immediate cancel
+
+                // Spawn PT1 anim
+                let pt1_entity = world().spawn_bundle(
+                    Pt1Anim {
+                        val: 1.3,
+                        target: 0.,
+                        time_constant: 0.1,
+                        //time_constant: 1.,
+                    }
+                ).await.id();
+                let pt1_component = world().entity(pt1_entity).component::<Pt1Anim>();
+
+                let led_tube_entities: Vec<AsyncEntityMut> = tube_entity.iter().map(|child| {
+                    world().entity(*child)
+                }).collect();
+
+                loop {
+                    let (next_val, finished) = match signal.try_read() {
+                        Some(true) => (0., true),
+                        Some(false) | None => pt1_component.get(|pt1anim| { (pt1anim.get_val(), pt1anim.target_reached()) }).await.unwrap_or((0., true))
+                    };
+
+                    let futures: Vec<ChannelOut<AsyncResult<_>>> = led_tube_entities.iter().map(|ent| {
+                        ent.component::<LedTubeLed>().set(move |ltl| {
+                            let ind = (ltl.get_index() as f32 / 15.) - 0.5;
+                            let lum = next_val * (ind * (1.3 - next_val) * 2.).cos();
+                            ltl.color = primary_color.clone() * lum + secondary_color.clone() * (1. - lum.min(1.)) * 0.2;
+                        })
+                    }).collect();
+                    let _ = join_all(futures).await;
+
+                    if finished {
+                        break;
+                    }
+                }
+
+                world().entity(pt1_entity).despawn().await;
+                Ok(())
+            });
+        }
     }
 }

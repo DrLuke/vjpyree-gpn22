@@ -15,6 +15,8 @@ struct TunnelgonParams {
     spiral_freq: f32,
     spiral_skew: f32,
     spiral_dir: f32,
+    spiral_accum: f32,
+    tun_accum: f32,
 }
 
 const PI: f32 = 3.14159;
@@ -76,7 +78,7 @@ fn fragment(mesh: VertexOutput) -> @location(0) vec4<f32> {
 
     let uvt = tunnel(uvc, 0.1);
 
-    var mask = 1.-smoothstep(0.15, 0.25, abs((uvt.y*12. + globals.time + uvt.x*-3.) % 1. - 0.5));
+    var mask = 1.-smoothstep(0.15, 0.25, abs((uvt.y*12. + globals.time*2. + uvt.x*-3. + params.tun_accum) % 1. - 0.5));
     let fog = 1.-smoothstep(0., 1.5, uvt.y);
     let fog_laser = 1.-smoothstep(0.5, 2., uvt.y);
 
@@ -101,4 +103,5 @@ fn fragment(mesh: VertexOutput) -> @location(0) vec4<f32> {
     return out;
     //return vec4<f32>(params.rings_pos[0], params.rings_amp[0]*0, 0, 1);
     //return vec4<f32>(lasermask, mask*fog*0.8745098039215686, mask*fog*0.1843137254901961, 1.)*0.9 ;
+    //return vec4<f32>(params.tun_accum % 1., mask*fog*0.8745098039215686, mask*fog*0.1843137254901961, 1.)*0.9 ;
 }

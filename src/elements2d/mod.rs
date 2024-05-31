@@ -17,7 +17,7 @@ use bevy_defer::AsyncExtension;
 use crate::elements2d::pedrogon::{SetPedrogonEvent, show_pedrogon, spawn_pedrogon, update_pedrogon};
 use crate::elements2d::render::Elements2dRendertarget;
 use crate::elements2d::swirlagon::{SetSwirlagonEvent, show_swirlagon_system, spawn_swirlagon, SwirlagonRenderMaterial};
-use crate::elements2d::tunnelgon::{CancelAnim, laser_animation_system, LaserAnimationEvent, ring_animation_system, RingAnimationEvent, SetTunnelgonEvent, spawn_tunnelgon_system, TunnelgonMaterial};
+use crate::elements2d::tunnelgon::{CancelAnim, laser_animation_system, LaserAnimationEvent, ring_animation_system, RingAnimationEvent, SetTunnelgonEvent, spawn_tunnelgon_system, tunnelgon_accum, TunnelgonAccum, TunnelgonMaterial};
 use crate::elements2d::zoomagon::{spawn_zoomagon_system, SpawnZoomagonEvent, zoomagon_system};
 use crate::propagating_render_layers::PropagatingRenderLayers;
 
@@ -39,6 +39,8 @@ impl Plugin for Elements2DPlugin {
         app.add_systems(Update, (show_swirlagon_system));
         app.add_event::<SetPedrogonEvent>();
         app.add_systems(Update, (show_pedrogon, update_pedrogon));
+        app.add_systems(Update, tunnelgon_accum);
+        app.init_resource::<TunnelgonAccum>();
     }
 }
 

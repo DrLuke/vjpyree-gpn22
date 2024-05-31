@@ -15,7 +15,7 @@ use crate::beat::BeatEvent;
 use crate::beat::bpm_guesser::BpmGuesser;
 use crate::elements2d::pedrogon::SetPedrogonEvent;
 use crate::elements2d::swirlagon::SetSwirlagonEvent;
-use crate::elements2d::tunnelgon::SetTunnelgonEvent;
+use crate::elements2d::tunnelgon::{SetTunnelgonEvent, TunnelgonAccum};
 use crate::hexagon::HexagonDefinition;
 use crate::hexagon::HexagonDefinition::Main;
 use crate::propagating_render_layers::PropagatingRenderLayers;
@@ -73,6 +73,7 @@ pub fn left_panel(
     mut pedrogon_reader: Local<ManualEventReader<SetPedrogonEvent>>,
     mut pedrogon_events: ResMut<Events<SetPedrogonEvent>>,
     mut colors: ResMut<AnimColors>,
+    mut tunnelgon_accum_settings: ResMut<TunnelgonAccum>,
 ) {
     let ctx = contexts.ctx_mut();
 
@@ -152,6 +153,7 @@ pub fn left_panel(
                 ui.add(egui::DragValue::new(&mut beat_controls_params.plot_bounds.0).speed(1.0));
                 ui.label("Width:");
                 ui.add(egui::DragValue::new(&mut beat_controls_params.plot_bounds.1).speed(1.0));
+                ui.checkbox(&mut tunnelgon_accum_settings.enabled, "Tunnelgon accum");
             });
 
             let values: Vec<f64> = beat_controls_params.bpm_data.iter().map(|a| a.clone() as f64).collect();

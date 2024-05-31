@@ -7,13 +7,14 @@ use std::ptr::read;
 use bevy::asset::Assets;
 use bevy::log::warn;
 use bevy::math::Quat;
-use bevy::prelude::{Asset, Color, ColorMaterial, Commands, Component, default, DespawnRecursiveExt, Entity, Event, EventReader, Handle, Image, Mesh, Query, RegularPolygon, Res, ResMut, Transform, TypePath, With};
+use bevy::prelude::{Asset, Color, ColorMaterial, Commands, Component, default, DespawnRecursiveExt, Entity, Event, EventReader, Handle, Image, Mesh, Query, Real, RegularPolygon, Res, ResMut, Resource, Time, Transform, TypePath, With};
 use bevy::render::render_resource::{AsBindGroup, ShaderRef, ShaderType};
 use bevy::render::view::RenderLayers;
 use bevy::sprite::{Material2d, MaterialMesh2dBundle, Mesh2dHandle};
 use bevy_defer::{async_system, AsyncAccess, AsyncCommandsExtension, signal_ids, world};
 use bevy_defer::reactors::Reactors;
 use bevy_defer::signals::{Receiver, Sender, Signal, Signals, SignalSender};
+use crate::beat::BeatEvent;
 use crate::parameter_animation::{LinearAnim, ParameterAnimation, Pt1Anim};
 use crate::elements2d::render::Elements2dRendertarget;
 use crate::elements2d::zoomagon::Zoomagon;
@@ -35,6 +36,8 @@ pub struct TunnelgonParams {
     pub spiral_skew: f32,
     pub spiral_dir: f32,
     pub spiral_accum: f32,
+    pub tun_accum: f32,
+    pub tun_accum_target: f32,
 }
 
 impl Default for TunnelgonParams {
@@ -47,6 +50,8 @@ impl Default for TunnelgonParams {
             spiral_skew: 6.,
             spiral_dir: 1.,
             spiral_accum: 1.,
+            tun_accum: 0.,
+            tun_accum_target: 0.,
         }
     }
 }
@@ -423,6 +428,36 @@ pub fn ring_animation_system(
                     });
                 }
             }
+        }
+    }
+}
+
+#[derive(Resource, Default)]
+pub struct TunnelgonAccum {
+    pub(crate) enabled: bool,
+}
+
+pub fn tunnelgon_accum(
+    mut materials: ResMut<Assets<TunnelgonMaterial>>,
+    mut beat_reader: EventReader<BeatEvent>,
+    mut query: Query<&Handle<TunnelgonMaterial>>,
+    time: Res<Time<Real>>,
+    settings: Res<TunnelgonAccum>,
+) {
+    for _ in beat_reader.read() {
+        if settings.enabled {
+            for mat_handle in query.iter() {
+                if let Some(mut mat) = materials.get_mut(mat_handle) {
+                    mat.params.tun_accum_target = mat.params.tun_accum_target + 1.;
+                }
+            }
+        }
+    }
+
+    for mat_handle in query.iter() {
+        if let Some(mut mat) = materials.get_mut(mat_handle) {
+            mat.params.tun_accum = mat.params.tun_accum + (mat.params.tun_accum_target - mat.params.tun_accum) * (time.delta_seconds() / (time.delta_seconds() + 0.1));
+            println!("{} {}", mat.params.tun_accum, mat.params.tun_accum_target);
         }
     }
 }
