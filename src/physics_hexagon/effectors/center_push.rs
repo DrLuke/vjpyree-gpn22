@@ -28,7 +28,7 @@ pub fn center_push_system(
                         direction.z = 0.;
                         commands.entity(*child).insert(
                             ExternalImpulse {
-                                impulse: direction*800000.,
+                                impulse: direction*1600000.,
                                 ..default()
                             }
                         );

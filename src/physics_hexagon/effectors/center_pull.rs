@@ -18,7 +18,7 @@ impl Default for CenterPullEvent {
     fn default() -> Self {
         Self {
             affected_hexagons: vec![],
-            strength: 800000.,
+            strength: 1600000.,
         }
     }
 }

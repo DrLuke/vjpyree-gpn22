@@ -16,6 +16,6 @@ pub struct GuiPlugin;
 impl Plugin for GuiPlugin{
     fn build(&self, app: &mut App) {
         app.insert_resource(BeatMute::default());
-        app.add_systems(GuiUpdate, (effectors_gui, elements_2d_gui, anim_gui, left_panel));
+        app.add_systems(GuiUpdate, (/*effectors_gui, elements_2d_gui, */anim_gui, left_panel));
     }
 }

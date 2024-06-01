@@ -62,10 +62,9 @@ fn main() {
             .run_in::<()>(AsyncUpdate2)
             .run_in::<()>(AsyncUpdate3)
         )
-        .add_plugins(WorldInspectorPlugin::new())
+        //.add_plugins(WorldInspectorPlugin::new())
         .insert_resource(RapierConfiguration {
             gravity: Vec3::Z * -9.81 * 1000.,
-
             ..RapierConfiguration::new(10.)
         })
         .add_plugins(RapierPhysicsPlugin::<NoUserData>::default())
